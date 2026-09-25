@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Van Deemter Explorer</title>
+  <meta name="description" content="Interactive van Deemter demo for liquid chromatography: see how flow rate, temperature, particle size and mass transfer change plate height and band broadening.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M2 28 C 10 28, 12 4, 16 4 S 22 28, 30 28' fill='none' stroke='%234a3aa7' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="title-row">
+      <div>
+        <h1>Van Deemter Explorer</h1>
+        <p class="lede">How flow rate, temperature, particle size and mass transfer set the plate height of a partition-chromatography column.</p>
+      </div>
+      <button id="theme" class="btn ghost" type="button" title="Switch between automatic, light and dark colors">Theme: auto</button>
+    </div>
+
+    <div class="equation" role="group" aria-label="Van Deemter equation. Press a term to switch it off.">
+      <span class="eq-part">H =</span>
+      <button class="term" type="button" data-term="A" aria-pressed="true">
+        <span class="key" style="--key: var(--series-a)"></span>
+        <span class="term-sym">A</span>
+        <span class="term-name">multipath effect</span>
+      </button>
+      <span class="eq-op">+</span>
+      <button class="term" type="button" data-term="B" aria-pressed="true">
+        <span class="key" style="--key: var(--series-b)"></span>
+        <span class="term-sym">B/u</span>
+        <span class="term-name">longitudinal diffusion</span>
+      </button>
+      <span class="eq-op">+</span>
+      <button class="term" type="button" data-term="C" aria-pressed="true">
+        <span class="key" style="--key: var(--series-c)"></span>
+        <span class="term-sym">C·u</span>
+        <span class="term-name">mass transfer</span>
+      </button>
+    </div>
+    <p class="eq-hint">Press a term to switch it off in the plot and in the animation.</p>
+  </header>
+
+  <main>
+    <section class="card controls" aria-label="Column conditions">
+      <div class="sliders">
+        <div class="control">
+          <div class="control-head">
+            <label for="flow">Flow rate</label>
+            <output id="flow-out" for="flow"></output>
+          </div>
+          <input id="flow" type="range" min="0.05" max="5" step="0.05" value="1">
+          <p class="control-sub" id="flow-sub"></p>
+        </div>
+
+        <div class="control">
+          <div class="control-head">
+            <label for="temp">Temperature</label>
+            <output id="temp-out" for="temp"></output>
+          </div>
+          <input id="temp" type="range" min="20" max="80" step="1" value="25">
+          <p class="control-sub">Faster diffusion, lower viscosity</p>
+        </div>
+
+        <div class="control">
+          <div class="control-head">
+            <label for="dp">Particle size</label>
+            <output id="dp-out" for="dp"></output>
+          </div>
+          <input id="dp" type="range" min="1.5" max="10" step="0.1" value="5">
+          <div class="presets" role="group" aria-label="Common particle sizes">
+            <button type="button" class="chip" data-dp="1.7">1.7</button>
+            <button type="button" class="chip" data-dp="3">3</button>
+            <button type="button" class="chip" data-dp="5">5</button>
+            <button type="button" class="chip" data-dp="10">10 µm</button>
+          </div>
+        </div>
+
+        <div class="control">
+          <div class="control-head">
+            <label for="mt">Mass transfer</label>
+            <output id="mt-out" for="mt"></output>
+          </div>
+          <input id="mt" type="range" min="0" max="100" step="1" value="54">
+          <p class="control-sub" id="mt-sub"></p>
+        </div>
+      </div>
+
+      <div class="run-row">
+        <button id="inject" class="btn primary" type="button">Inject</button>
+        <button id="pause" class="btn" type="button" aria-pressed="false">Pause</button>
+        <label class="select">Speed
+          <select id="speed">
+            <option value="0.25">0.25×</option>
+            <option value="0.5">0.5×</option>
+            <option value="1" selected>1×</option>
+            <option value="2">2×</option>
+            <option value="4">4×</option>
+            <option value="8">8×</option>
+          </select>
+        </label>
+        <label class="check"><input type="checkbox" id="ghost" checked> Ghost band at u<sub>opt</sub></label>
+        <label class="check"><input type="checkbox" id="truescale"> True-scale band</label>
+        <label class="check"><input type="checkbox" id="auto" checked> Re-inject automatically</label>
+      </div>
+    </section>
+
+    <section class="card column-card" aria-labelledby="column-title">
+      <div class="card-head">
+        <h2 id="column-title">Inside the column</h2>
+        <p class="card-sub" id="scale-note"></p>
+      </div>
+      <canvas id="column" class="column-canvas" role="img"
+        aria-label="Animation of analyte molecules flowing through a packed column. Molecules stop in the stationary liquid film when they touch a packing particle, then rejoin the flow."></canvas>
+      <canvas id="band" class="band-canvas" role="img"
+        aria-label="Distribution of analyte along the column: histogram of the molecules and the predicted Gaussian band."></canvas>
+      <div class="legend">
+        <span class="lg"><span class="lg-sphere"></span>Analyte molecule</span>
+        <span class="lg"><span class="lg-particle"></span>Support particle with stationary liquid film</span>
+        <span class="lg"><span class="lg-streak"></span>Mobile-phase flow</span>
+        <span class="lg"><span class="lg-bar"></span>Molecules per slice</span>
+        <span class="lg"><span class="lg-line"></span>Predicted band, σ² = H·x</span>
+        <span class="lg" id="lg-ghost"><span class="lg-dash"></span>Same band at u<sub>opt</sub></span>
+      </div>
+      <p class="live" id="live"></p>
+    </section>
+
+    <div class="grid-2">
+      <section class="card plot-card" aria-labelledby="vd-title">
+        <div class="card-head row">
+          <h2 id="vd-title">Van Deemter plot</h2>
+          <label class="check small"><input type="checkbox" id="autoy"> Auto-scale H axis</label>
+        </div>
+        <div class="plot-wrap">
+          <canvas id="vd" class="vd-canvas" role="img"
+            aria-label="Van Deemter plot: plate height against linear velocity, with the A, B/u and C·u terms. The values are in the table below."></canvas>
+          <div id="vd-tip" class="tooltip" hidden></div>
+        </div>
+        <div class="legend">
+          <span class="lg"><span class="lg-key" style="--key: var(--text-primary)"></span>H, total</span>
+          <span class="lg"><span class="lg-key" style="--key: var(--series-a)"></span>A</span>
+          <span class="lg"><span class="lg-key" style="--key: var(--series-b)"></span>B/u</span>
+          <span class="lg"><span class="lg-key" style="--key: var(--series-c)"></span>C·u</span>
+          <span class="lg"><span class="lg-dot"></span>Current flow</span>
+          <span class="lg"><span class="lg-ring"></span>Optimum</span>
+          <span class="lg"><span class="lg-wash" style="--key: var(--status-warning)"></span>▲ &gt; 400 bar</span>
+          <span class="lg"><span class="lg-wash" style="--key: var(--status-critical)"></span>✕ &gt; 1300 bar</span>
+        </div>
+        <details class="table-view">
+          <summary>Show the curve as a table</summary>
+          <div class="table-scroll"><table id="vd-table"></table></div>
+        </details>
+      </section>
+
+      <section class="card readouts" aria-label="Results">
+        <div class="hero">
+          <span class="tile-label">Plate height, H</span>
+          <span class="hero-value" id="r-H"></span>
+          <div class="parts">
+            <span><span class="lg-key" style="--key: var(--series-a)"></span>A <strong id="r-A"></strong></span>
+            <span><span class="lg-key" style="--key: var(--series-b)"></span>B/u <strong id="r-B"></strong></span>
+            <span><span class="lg-key" style="--key: var(--series-c)"></span>C·u <strong id="r-C"></strong></span>
+            <span class="parts-unit">µm</span>
+          </div>
+        </div>
+        <div class="tiles">
+          <div class="tile">
+            <span class="tile-label">Theoretical plates, N</span>
+            <span class="tile-value" id="r-N"></span>
+            <span class="tile-sub">N = L / H for a 150 mm column</span>
+          </div>
+          <div class="tile">
+            <span class="tile-label">Optimum velocity</span>
+            <span class="tile-value" id="r-uopt"></span>
+            <span class="tile-sub" id="r-uopt-sub"></span>
+          </div>
+          <div class="tile">
+            <span class="tile-label">Retention time</span>
+            <span class="tile-value" id="r-tR"></span>
+            <span class="tile-sub" id="r-tR-sub"></span>
+          </div>
+          <div class="tile">
+            <span class="tile-label">Peak width at outlet, 4σ</span>
+            <span class="tile-value" id="r-sigma"></span>
+            <span class="tile-sub">Real column, from σ² = H·L</span>
+          </div>
+          <div class="tile">
+            <span class="tile-label">In stationary phase now</span>
+            <span class="tile-value" id="r-frac"></span>
+            <span class="tile-sub" id="r-frac-sub"></span>
+          </div>
+          <div class="tile">
+            <span class="tile-label">Diffusion coefficient, D<sub>m</sub></span>
+            <span class="tile-value" id="r-Dm"></span>
+            <span class="tile-sub" id="r-Dm-sub"></span>
+          </div>
+        </div>
+        <div class="pressure">
+          <div class="p-head">
+            <span class="tile-label">Back-pressure</span>
+            <span class="p-value"><strong id="r-P"></strong> <span id="r-Ppsi"></span></span>
+          </div>
+          <div class="meter" aria-hidden="true">
+            <div class="meter-fill" id="p-fill"></div>
+            <span class="meter-mark" style="left: 26.667%"></span>
+            <span class="meter-mark" style="left: 86.667%"></span>
+          </div>
+          <div class="meter-scale" aria-hidden="true">
+            <span style="left: 0">0</span>
+            <span style="left: 26.667%">400</span>
+            <span style="left: 86.667%">1300</span>
+            <span style="left: 100%">1500 bar</span>
+          </div>
+          <p class="p-status" id="p-status"></p>
+        </div>
+      </section>
+    </div>
+
+    <section class="card notes">
+      <details>
+        <summary>About the model and the animation</summary>
+        <div class="notes-body">
+          <h3>Equation</h3>
+          <p>H = A + B/u + C·u, with A = 2λd<sub>p</sub> (λ = 0.5), B = 2γD<sub>m</sub> (γ = 0.7), and C = C<sub>m</sub> + C<sub>s</sub>.
+            Mobile-phase mass transfer is C<sub>m</sub> = ω(k)·d<sub>p</sub>²/D<sub>m</sub> with the Golay-type ω(k) = (1 + 6k + 11k²) / [96(1 + k)²].
+            Stationary-phase mass transfer is C<sub>s</sub> = (2/3)·k/(1 + k)²·d<sub>f</sub>²/D<sub>s</sub>, with film thickness d<sub>f</sub> = 0.1·d<sub>p</sub> and D<sub>s</sub> = 0.2·D<sub>m</sub>.</p>
+          <h3>Controls</h3>
+          <ul>
+            <li><strong>Flow rate</strong> becomes linear velocity through a 150 × 4.6 mm column with total porosity 0.65.</li>
+            <li><strong>Temperature</strong> changes D<sub>m</sub> ∝ T/η (Wilke–Chang scaling, 1.0 × 10⁻⁹ m²/s at 25 °C) and the viscosity of an aqueous mobile phase. It doesn’t change k here; in a real separation, retention usually drops as temperature rises.</li>
+            <li><strong>Particle size</strong> scales A with d<sub>p</sub> and C with d<sub>p</sub>², and sets the back-pressure ΔP = φηLu/d<sub>p</sub>² (φ = 700).</li>
+            <li><strong>Mass transfer</strong> sets the analyte’s affinity for the stationary phase, expressed as the retention factor k. Stronger affinity means longer stays in the film and a larger C term. Switching the C·u term off makes exchange between the phases instantaneous: the analyte is still retained and travels at u/(1 + k), slower than the mobile phase, but every molecule keeps the same average speed, so mass transfer adds no broadening.</li>
+          </ul>
+          <h3>What the animation shows</h3>
+          <p>Each molecule alternates between flowing with the mobile phase and sitting still in the stationary liquid film on a particle. On average it spends k/(1 + k) of its time in the film, so the band moves at u/(1 + k). The random lengths of those stays produce the C·u broadening. The A and B/u terms are added as random variation in each flowing step. The histogram of molecules and the Gaussian predicted from σ² = H·x come from the same numbers, so they should agree.</p>
+          <p>A real column has tens of thousands of plates, and a molecule enters and leaves the stationary phase tens of thousands of times. That is far too fast to see. The animation therefore shows a column with 81× fewer plates: band widths are magnified 9×. The stays in the film are also made longer and more regular than real ones, so each one is visible, while still producing exactly the C·u broadening. The up-and-down path of each molecule around the packing is illustrative only. All readouts give real-column values.</p>
+        </div>
+      </details>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>Van Deemter Explorer · a teaching demonstration for liquid chromatography. Model constants are typical textbook values chosen for illustration.</p>
+  </footer>
+
+  <script src="js/model.js"></script>
+  <script src="js/sim.js"></script>
+  <script src="js/column.js"></script>
+  <script src="js/plots.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

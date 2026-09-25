@@ -145,7 +145,7 @@ body {
 }
 
 h1, h2, h3 { line-height: 1.2; margin: 0; }
-h1 { font-size: 1.75rem; font-weight: 650; letter-spacing: -0.01em; }
+h1 { font-size: 2.6rem; font-weight: 750; letter-spacing: -0.02em; line-height: 1.1; }
 /* Panel titles: title case, bold, and the largest text inside each panel. */
 h2 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.005em; }
 h3 { font-size: 0.95rem; font-weight: 620; margin: 1rem 0 0.35rem; }
@@ -168,7 +168,21 @@ main { display: grid; gap: 16px; }
   gap: 16px;
 }
 
-.lede { margin: 6px 0 0; color: var(--text-secondary); max-width: 62ch; }
+.lede { margin: 12px 0 0; color: var(--text-secondary); max-width: 62ch; }
+
+/* Header: small uppercase line, large title, and a rule in the three term colours. */
+.eyebrow {
+  margin: 0 0 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.title-rule { display: flex; gap: 4px; width: 260px; max-width: 100%; margin-top: 12px; }
+.title-rule span { flex: 1; height: 5px; border-radius: 1px; background: var(--series-a); }
+.title-rule span:nth-child(2) { background: var(--series-b); }
+.title-rule span:nth-child(3) { background: var(--series-c); }
 
 /* ---------- Equation / term toggles ---------- */
 
@@ -484,7 +498,8 @@ th { color: var(--text-secondary); font-weight: 600; }
 
 @media (max-width: 560px) {
   .site-header, main, .site-footer { padding-left: 16px; padding-right: 16px; }
-  h1 { font-size: 1.6rem; }
+  h1 { font-size: 2rem; }
+  .title-rule { width: 200px; }
   .card { padding: 14px; }
   .sliders { grid-template-columns: minmax(0, 1fr); }
   .term { padding: 6px 10px; }

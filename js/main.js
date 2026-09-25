@@ -84,7 +84,6 @@
     band.setVisible(1, state.twoAnalytes);
     band.mag = mag;
     band.showGhost = state.ghost;
-    band.rescale();
     column.setParticleSize(inp.dpUm);
     vdPlot.setData({
       terms: state.terms, u: u, autoY: state.autoY,
@@ -104,7 +103,6 @@
       a.injectTime = a.sim.t;
     });
     column.onInject();
-    band.onInject();
     endTimer = null;
   }
 
@@ -231,7 +229,7 @@
     } else {
       var sigmaReal = Math.sqrt(a1.sim.variance) / cur.mag;
       text = (a1.sim.center < P.L ? 'Band centre ' + where(a1) + ' from the inlet' : 'Band centre has reached the detector') +
-        ' · 2σ = ' + fmt(2 * sigmaReal * 1000, 2) + ' mm (real column)';
+        ' · 4σ = ' + fmt(4 * sigmaReal * 1000, 2) + ' mm (real column)';
     }
     els.live.textContent = text + ' · ' + minutes(elapsed) + ' after injection';
   }

@@ -14,19 +14,16 @@
   --accent: #2a78d6;
   --accent-ink: #ffffff;
 
-  /* Chart series (reference palette slots 3, 2, 1) and the analytes (violet; translucent blue). */
+  /* Chart series (reference palette slots 3, 2, 1) and the analytes (slots 7 and 6). */
   --series-a: #1baf7a;
   --series-b: #eb6834;
   --series-c: #2a78d6;
   --analyte: #4a3aa7;
   --analyte-hi: #b9b0f3;
   --analyte-lo: #261c66;
-  --analyte2: #2a78d6;
-  --analyte2-hi: #b7d3f6;
-  --analyte2-lo: #184f95;
-  /* Transparency keeps analyte 2 distinguishable from the violet analyte 1 (validated). */
-  --analyte2-alpha: 0.6;
-  --analyte2-line-alpha: 0.7;
+  --analyte2: #008300;
+  --analyte2-hi: #9fdc9f;
+  --analyte2-lo: #004400;
 
   /* Status (reserved for the pressure limits). */
   --status-good: #0ca30c;
@@ -67,9 +64,9 @@
     --analyte: #9085e9;
     --analyte-hi: #ddd8fb;
     --analyte-lo: #4a3aa7;
-    --analyte2: #3987e5;
-    --analyte2-hi: #9ec5f4;
-    --analyte2-lo: #1c5cab;
+    --analyte2: #008300;
+    --analyte2-hi: #7fd67f;
+    --analyte2-lo: #003a00;
     --success-text: #0ca30c;
     --mobile-bg: #142130;
     --streak: rgba(140, 180, 220, 0.28);
@@ -100,9 +97,9 @@
   --analyte: #9085e9;
   --analyte-hi: #ddd8fb;
   --analyte-lo: #4a3aa7;
-  --analyte2: #3987e5;
-  --analyte2-hi: #9ec5f4;
-  --analyte2-lo: #1c5cab;
+  --analyte2: #008300;
+  --analyte2-hi: #7fd67f;
+  --analyte2-lo: #003a00;
   --success-text: #0ca30c;
   --mobile-bg: #142130;
   --streak: rgba(140, 180, 220, 0.28);
@@ -130,7 +127,6 @@ body:not(.two-analytes) .a2-only { display: none !important; }
 }
 .akey.a2, .lg-sphere.a2 {
   background: radial-gradient(circle at 35% 35%, var(--analyte2-hi), var(--analyte2) 55%, var(--analyte2-lo));
-  opacity: var(--analyte2-alpha);
 }
 
 /* ---------- Base ---------- */

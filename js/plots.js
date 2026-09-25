@@ -85,7 +85,6 @@
     this.padL = 56;
     this.padR = 56;
     this.yMax = 0;
-    this.snap = true;
     this.mag = 1;
     this.showGhost = true;
     this.refreshTheme();
@@ -93,7 +92,6 @@
 
   BandPlot.prototype.setVisible = function (index, visible) {
     this.species[index].visible = visible;
-    this.snap = true;
   };
 
   BandPlot.prototype.setLayout = function (padL, padR) {
@@ -113,25 +111,11 @@
     this.nb = Math.max(30, Math.min(120, Math.round((this.x1 - this.x0) / 9)));
     var nb = this.nb;
     this.species.forEach(function (sp) { sp.counts = new Uint16Array(nb); });
-    this.rescale();
-  };
-
-  BandPlot.prototype.onInject = function () {
-    this.rescale();
-  };
-
-  /** Jump straight to the new y-scale on the next frame instead of easing into it. */
-  BandPlot.prototype.rescale = function () {
-    this.snap = true;
   };
 
   BandPlot.prototype.refreshTheme = function () {
     this.colors = readChrome();
-    this.species.forEach(function (sp) {
-      sp.color = cssVar(sp.colorVar);
-      var a = parseFloat(cssVar(sp.colorVar + '-line-alpha'));   // optional, e.g. --analyte2-line-alpha
-      sp.alpha = a > 0 && a <= 1 ? a : 1;
-    });
+    this.species.forEach(function (sp) { sp.color = cssVar(sp.colorVar); });
   };
 
   BandPlot.prototype.draw = function () {
@@ -142,25 +126,26 @@
     var shown = this.species.filter(function (sp) { return sp.visible; });
 
     // Histograms and predicted band parameters for each visible analyte.
-    var want = 1;
+    var yMax = 1;
     shown.forEach(function (sp) {
-      var sim = sp.sim, counts = sp.counts, maxCount = 0;
+      var sim = sp.sim, counts = sp.counts;
       counts.fill(0);
       for (var j = 0; j < sim.n; j++) {
         var b = Math.floor(sim.x[j] / binW);
-        if (b >= 0 && b < nb && ++counts[b] > maxCount) maxCount = counts[b];
+        if (b >= 0 && b < nb) counts[b]++;
       }
       sp.mu = sim.center;
       sp.sd = Math.sqrt(sim.variance);
       sp.sdG = Math.sqrt(sim.varGhost);
       sp.amp = sim.n * binW / SQRT2PI;
-      want = Math.max(want, 1.2 * sp.amp / sp.sd, self.showGhost ? 1.2 * sp.amp / sp.sdG : 0, 1.05 * maxCount);
+      yMax = Math.max(yMax, sp.amp / sp.sd, self.showGhost ? sp.amp / sp.sdG : 0);
     });
 
-    // The y-scale follows the tallest predicted band, so the width comparison
-    // stays readable as the bands spread out.
-    if (this.snap || !(this.yMax > 0)) { this.yMax = want; this.snap = false; }
-    else this.yMax += (want - this.yMax) * 0.08;
+    // The y-scale follows the tallest predicted peak, so the width comparison
+    // stays readable as the bands spread out. It is set from the smooth
+    // prediction (not the noisy histogram), so it needs no easing and does not
+    // shift when the animation pauses. Headroom leaves space for histogram noise.
+    this.yMax = 1.25 * yMax;
     var kx = (x1 - x0) / L, ky = (bot - top) / this.yMax;
     g.clearRect(0, 0, this.W, this.H);
 
@@ -194,7 +179,7 @@
     // Histograms of simulated molecules.
     var bw = (x1 - x0) / nb, gap = bw > 6 ? 2 : 1;
     shown.forEach(function (sp) {
-      g.fillStyle = withAlpha(sp.color, 0.28 * sp.alpha);
+      g.fillStyle = withAlpha(sp.color, 0.28);
       for (i = 0; i < nb; i++) {
         if (!sp.counts[i]) continue;
         var h = Math.min(sp.counts[i] * ky, bot - top + 12);
@@ -229,24 +214,25 @@
       g.lineTo(x1, bot);
       g.lineTo(x0, bot);
       g.closePath();
-      g.fillStyle = withAlpha(sp.color, 0.1 * sp.alpha);
+      g.fillStyle = withAlpha(sp.color, 0.1);
       g.fill();
       curve(sp, sp.sd);
-      g.strokeStyle = withAlpha(sp.color, sp.alpha);
+      g.strokeStyle = sp.color;
       g.lineWidth = 2;
       g.lineJoin = 'round';
       g.stroke();
     });
     g.restore();
 
-    // ±σ bracket on each band with the real-column value.
+    // Peak-width bracket on each band: 4σ, spanning μ ± 2σ at the height where
+    // the Gaussian is e⁻² (13.5%) of its peak, labelled with the real-column value.
     var placed = [];
     g.font = '12px ' + FONT;
     shown.forEach(function (sp) {
       var mu = sp.mu, sd = sp.sd, amp = sp.amp;
       var peakY = bot - Math.min(amp / sd * ky, bot - top);
-      var yb = bot - Math.min(amp / sd * Math.exp(-0.5) * ky, bot - top - 4);
-      var xl = x0 + (mu - sd) * kx, xr = x0 + (mu + sd) * kx;
+      var yb = bot - Math.min(amp / sd * Math.exp(-2) * ky, bot - top - 4);
+      var xl = x0 + (mu - 2 * sd) * kx, xr = x0 + (mu + 2 * sd) * kx;
       if (!(xr > x0 && xl < x1)) return;
       g.strokeStyle = C.text;
       g.lineWidth = 1;
@@ -255,10 +241,10 @@
       g.moveTo(xl, yb); g.lineTo(xr, yb);
       g.moveTo(xr, yb - 4); g.lineTo(xr, yb + 4);
       g.stroke();
-      var label = '2σ = ' + fmt(2 * sd / self.mag * 1000, 2) + ' mm';
+      var label = '4σ = ' + fmt(4 * sd / self.mag * 1000, 2) + ' mm';
       var tw = g.measureText(label).width;
       var lx = Math.max(x0 + tw / 2, Math.min(x1 - tw / 2, (xl + xr) / 2));
-      var ly = Math.max(top + 12, Math.min(peakY - 4, yb - 6));
+      var ly = Math.max(top + 12, peakY - 4);
       // Lift a label that would sit on top of the other band's label.
       placed.forEach(function (p) {
         if (Math.abs(p.x - lx) < (p.w + tw) / 2 + 6 && Math.abs(p.y - ly) < 15) ly = Math.max(top + 12, p.y - 15);

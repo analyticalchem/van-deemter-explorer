@@ -4,7 +4,7 @@ An interactive, browser-based demonstration of the van Deemter equation for part
 
 **H = A + B/u + C·u**
 
-Analyte molecules flow through a packed column, stop in the stationary liquid film when they touch the packing, and then rejoin the mobile phase. Under the column, a Gaussian band profile shows how wide the analyte packet has become. The van Deemter plot shows where the current flow rate sits on the curve.
+Analyte molecules flow through a packed column, stop in the stationary liquid film when they touch the packing, and then rejoin the mobile phase. Under the column, a Gaussian band profile shows how wide the analyte packet has become. The van Deemter plot shows where the current flow rate sits on the curve. A second analyte, with its own mass transfer, can be switched on to show how the two bands separate and how resolution depends on flow rate.
 
 No build step and no dependencies: plain HTML, CSS and JavaScript.
 
@@ -21,6 +21,7 @@ No build step and no dependencies: plain HTML, CSS and JavaScript.
 | **Temperature** (20–80 °C) | Raises the analyte diffusion coefficient D<sub>m</sub> ∝ T/η and lowers the mobile-phase viscosity η. B grows, C shrinks, and u<sub>opt</sub> moves to higher flow. |
 | **Particle size** (1.5–10 µm) | A ∝ d<sub>p</sub> and C ∝ d<sub>p</sub>², so smaller particles give lower, flatter curves. Back-pressure ∝ 1/d<sub>p</sub>². |
 | **Mass transfer** (k = 0.3–10) | The analyte's affinity for the stationary phase, expressed as the retention factor k. Stronger affinity means longer stays in the film, a larger C term and a longer retention time. |
+| **Second analyte** (on/off, with its own mass-transfer slider) | Injects a second compound (green) together with the first (violet). It has its own k but the same diffusion coefficient, so only its C term differs. It gets its own band, its own dashed van Deemter curve and C·u line, and paired readouts, plus the resolution R<sub>s</sub> between the two bands. Switching it on starts a fresh injection. |
 | **Term toggles** (A multipath effect, B/u longitudinal diffusion, C·u mass transfer) | Switch a term off in both the plot and the animation. Switching C·u off makes exchange between the phases instantaneous (the textbook meaning of C = 0): the analyte is still retained and moves at u/(1 + k), slower than the flow wisps, but mass transfer no longer broadens the band. |
 | **Ghost band** | A dashed profile showing how wide the band would be at the optimum flow rate, drawn at the same position in the column. |
 | **True-scale band** | Removes the 9× band-width magnification (see below). |
@@ -41,6 +42,7 @@ Dm(T) = 1.0e-9 m²/s · (T/298 K) · η(25 °C)/η(T)
 η(T)  = 0.89 mPa·s · exp(1812 K · (1/T − 1/298.15 K))     (water, fits 20–80 °C to within ~3%)
 ΔP    = φ·η·L·u / dp²              φ = 700
 N     = L / H,  σ² = H·x,  t_R = (L/u)(1 + k)
+Rs    = (t_R2 − t_R1) / [2(σ_t1 + σ_t2)],   σ_t = √(H·L)·(1 + k)/u     (band widths in time at the outlet)
 ```
 
 At default conditions (5 µm, 25 °C, k = 2) this gives u<sub>opt</sub> ≈ 0.87 mm/s (0.57 mL/min) and H<sub>min</sub> ≈ 8.2 µm. The constants are typical textbook values, chosen for illustration rather than to describe any particular column.
@@ -51,6 +53,8 @@ Simplifications worth knowing about:
 - Temperature changes diffusion and viscosity but not retention. In a real separation, k usually falls as temperature rises.
 - Because B ∝ D<sub>m</sub> and C ∝ 1/D<sub>m</sub>, H<sub>min</sub> = A + 2√(BC) does not depend on temperature in this model. Temperature only moves the optimum to a higher velocity and flattens the C branch.
 - Diffusion inside the stationary phase is not included in B.
+- The two analytes share one diffusion coefficient; real compounds of different size would also differ in D<sub>m</sub>.
+- The resolution readout is for the real column. The bands on screen are drawn 9× wider, so they look about 9× less resolved; the caption gives that "as drawn" value as well.
 
 ## How the animation relates to the equation
 

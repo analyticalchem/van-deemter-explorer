@@ -152,6 +152,8 @@
         <div class="legend">
           <span class="lg a1-only"><span class="lg-key" style="--key: var(--text-primary)"></span>Analyte 1: solid curves, ● current flow, ○ optimum</span>
           <span class="lg a2-only"><span class="lg-key dashed" style="--key: var(--text-primary)"></span>Analyte 2: dashed curves, ◆ current flow, ◇ optimum</span>
+        </div>
+        <div class="legend">
           <span class="lg"><span class="lg-key" style="--key: var(--text-primary)"></span>H, total</span>
           <span class="lg"><span class="lg-key" style="--key: var(--series-a)"></span>A</span>
           <span class="lg"><span class="lg-key" style="--key: var(--series-b)"></span>B/u</span>
@@ -171,7 +173,7 @@
         </div>
         <div class="hero">
           <div class="hero-block a1-only">
-            <span class="tile-label hero-title"><span class="akey a1"></span>Plate Height, H <span class="nowrap">(Analyte 1)</span></span>
+            <span class="tile-label"><span class="akey a1"></span>Plate Height, H <span class="nowrap">(Analyte 1)</span></span>
             <span class="hero-value" id="r-H"></span>
             <div class="parts">
               <span><span class="lg-key" style="--key: var(--series-a)"></span>A <strong id="r-A"></strong></span>
@@ -181,7 +183,7 @@
             </div>
           </div>
           <div class="hero-block a2-only">
-            <span class="tile-label hero-title"><span class="akey a2"></span>Plate Height, H <span class="nowrap">(Analyte 2)</span></span>
+            <span class="tile-label"><span class="akey a2"></span>Plate Height, H <span class="nowrap">(Analyte 2)</span></span>
             <span class="hero-value" id="r-H2"></span>
             <div class="parts">
               <span><span class="lg-key" style="--key: var(--series-a)"></span>A <strong id="r-A2"></strong></span>
@@ -198,44 +200,44 @@
         </div>
         <div class="tiles">
           <div class="tile">
-            <span class="tile-label">Theoretical plates, N</span>
+            <span class="tile-label">Theoretical Plates, N</span>
             <span class="tile-value a1-only"><span class="akey a1"></span><span id="r-N"></span></span>
             <span class="tile-value a2-only"><span class="akey a2"></span><span id="r-N2"></span></span>
             <span class="tile-sub">N = L / H for a 150 mm column</span>
           </div>
           <div class="tile">
-            <span class="tile-label">Optimum velocity</span>
+            <span class="tile-label">Optimum Velocity</span>
             <span class="tile-value a1-only"><span class="akey a1"></span><span id="r-uopt"></span></span>
             <span class="tile-value a2-only"><span class="akey a2"></span><span id="r-uopt2"></span></span>
             <span class="tile-sub" id="r-uopt-sub"></span>
           </div>
           <div class="tile">
-            <span class="tile-label">Retention time</span>
+            <span class="tile-label">Retention Time</span>
             <span class="tile-value a1-only"><span class="akey a1"></span><span id="r-tR"></span></span>
             <span class="tile-value a2-only"><span class="akey a2"></span><span id="r-tR2"></span></span>
             <span class="tile-sub" id="r-tR-sub"></span>
           </div>
           <div class="tile">
-            <span class="tile-label">Peak width at outlet, 4σ</span>
+            <span class="tile-label">Peak Width at Outlet, 4σ</span>
             <span class="tile-value a1-only"><span class="akey a1"></span><span id="r-sigma"></span></span>
             <span class="tile-value a2-only"><span class="akey a2"></span><span id="r-sigma2"></span></span>
             <span class="tile-sub">Real column, from σ² = H·L</span>
           </div>
           <div class="tile">
-            <span class="tile-label">In stationary phase now</span>
+            <span class="tile-label">In Stationary Phase Now</span>
             <span class="tile-value a1-only"><span class="akey a1"></span><span id="r-frac"></span></span>
             <span class="tile-value a2-only"><span class="akey a2"></span><span id="r-frac2"></span></span>
             <span class="tile-sub" id="r-frac-sub"></span>
           </div>
           <div class="tile">
-            <span class="tile-label">Diffusion coefficient, D<sub>m</sub></span>
+            <span class="tile-label">Diffusion Coefficient, D<sub>m</sub></span>
             <span class="tile-value" id="r-Dm"></span>
             <span class="tile-sub" id="r-Dm-sub"></span>
           </div>
         </div>
         <div class="pressure">
           <div class="p-head">
-            <span class="tile-label">Back-pressure</span>
+            <span class="tile-label">Back-Pressure</span>
             <span class="p-value"><strong id="r-P"></strong> <span id="r-Ppsi"></span></span>
           </div>
           <div class="meter" aria-hidden="true">

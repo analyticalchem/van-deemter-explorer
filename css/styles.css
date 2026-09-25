@@ -236,8 +236,8 @@ input:focus-visible, summary:focus-visible {
 .card-head.row { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
 .card-sub { margin: 4px 0 0; font-size: 0.85rem; color: var(--text-secondary); }
 
-/* Block frames: solid = animation, dashed = calculated results. */
-.column-card { border: 2px solid var(--text-muted); }
+/* Block frames: solid = controls and animation, dashed = calculated results. */
+.controls, .column-card { border: 2px solid var(--text-muted); }
 .plot-card, .readouts { border: 2px dashed var(--text-muted); }
 
 /* ---------- Controls ---------- */
@@ -341,6 +341,7 @@ select {
   font-size: 0.82rem;
   color: var(--text-secondary);
 }
+.legend + .legend { margin-top: 4px; }
 .lg { display: inline-flex; align-items: center; gap: 7px; }
 .lg[hidden] { display: none; }
 
@@ -413,14 +414,15 @@ th { color: var(--text-secondary); font-weight: 600; }
 
 .readouts { display: flex; flex-direction: column; gap: 16px; }
 
-.tile-label { display: block; font-size: 0.82rem; color: var(--text-secondary); }
+/* Calculated Results: each value's title (1.2rem) is a little larger than the
+   value itself (1.1rem); both stay below the panel title (1.4rem). */
+.tile-label { display: block; font-size: 1.2rem; font-weight: 620; line-height: 1.25; color: var(--text-primary); }
 /* One identical plate-height block per analyte shown. */
 .hero { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px 24px; }
-.hero-title { font-size: 1.05rem; font-weight: 620; color: var(--text-primary); }
 .nowrap { white-space: nowrap; }
-.hero-value { display: block; font-size: 1.25rem; font-weight: 650; line-height: 1.2; margin-top: 4px; }
+.hero-value { display: block; font-size: 1.1rem; font-weight: 650; line-height: 1.2; margin-top: 4px; }
 .rs-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; padding-top: 10px; border-top: 1px solid var(--grid); }
-.rs-value { font-size: 1.25rem; font-weight: 650; line-height: 1.2; }
+.rs-value { font-size: 1.1rem; font-weight: 650; line-height: 1.2; }
 .parts { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 6px; font-size: 0.88rem; color: var(--text-secondary); }
 .parts span { display: inline-flex; align-items: center; gap: 6px; }
 .parts strong { color: var(--text-primary); font-weight: 600; }
@@ -432,14 +434,14 @@ th { color: var(--text-secondary); font-weight: 600; }
   gap: 14px 16px;
 }
 .tile { padding-top: 10px; border-top: 1px solid var(--grid); min-width: 0; }
-.tile-value { display: block; font-size: 1.25rem; font-weight: 620; margin-top: 2px; }
+.tile-value { display: block; font-size: 1.1rem; font-weight: 600; margin-top: 4px; }
 .tile-value + .tile-value { margin-top: 0; }
 .tile-sub { display: block; font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
 
 .pressure { padding-top: 12px; border-top: 1px solid var(--grid); }
 .p-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
 .p-value { font-size: 0.95rem; color: var(--text-secondary); }
-.p-value strong { font-size: 1.25rem; color: var(--text-primary); font-weight: 620; }
+.p-value strong { font-size: 1.1rem; color: var(--text-primary); font-weight: 600; }
 
 .meter {
   position: relative;

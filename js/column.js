@@ -440,6 +440,9 @@
       grad.addColorStop(0, cssVar(tk.colorVar + '-hi'));
       grad.addColorStop(0.55, cssVar(tk.colorVar));
       grad.addColorStop(1, cssVar(tk.colorVar + '-lo'));
+      var alpha = parseFloat(cssVar(tk.colorVar + '-alpha'));   // optional, e.g. --analyte2-alpha
+      g.clearRect(0, 0, size, size);
+      g.globalAlpha = alpha > 0 && alpha <= 1 ? alpha : 1;
       g.fillStyle = grad;
       g.beginPath();
       g.arc(m, m, R, 0, Math.PI * 2);

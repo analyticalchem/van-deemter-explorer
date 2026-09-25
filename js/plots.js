@@ -127,7 +127,11 @@
 
   BandPlot.prototype.refreshTheme = function () {
     this.colors = readChrome();
-    this.species.forEach(function (sp) { sp.color = cssVar(sp.colorVar); });
+    this.species.forEach(function (sp) {
+      sp.color = cssVar(sp.colorVar);
+      var a = parseFloat(cssVar(sp.colorVar + '-line-alpha'));   // optional, e.g. --analyte2-line-alpha
+      sp.alpha = a > 0 && a <= 1 ? a : 1;
+    });
   };
 
   BandPlot.prototype.draw = function () {
@@ -190,7 +194,7 @@
     // Histograms of simulated molecules.
     var bw = (x1 - x0) / nb, gap = bw > 6 ? 2 : 1;
     shown.forEach(function (sp) {
-      g.fillStyle = withAlpha(sp.color, 0.28);
+      g.fillStyle = withAlpha(sp.color, 0.28 * sp.alpha);
       for (i = 0; i < nb; i++) {
         if (!sp.counts[i]) continue;
         var h = Math.min(sp.counts[i] * ky, bot - top + 12);
@@ -225,10 +229,10 @@
       g.lineTo(x1, bot);
       g.lineTo(x0, bot);
       g.closePath();
-      g.fillStyle = withAlpha(sp.color, 0.1);
+      g.fillStyle = withAlpha(sp.color, 0.1 * sp.alpha);
       g.fill();
       curve(sp, sp.sd);
-      g.strokeStyle = sp.color;
+      g.strokeStyle = withAlpha(sp.color, sp.alpha);
       g.lineWidth = 2;
       g.lineJoin = 'round';
       g.stroke();

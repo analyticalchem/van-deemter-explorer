@@ -110,10 +110,12 @@
   --wall: #77756e;
 }
 
-/* ---------- Second analyte ---------- */
+/* ---------- Analytes ---------- */
 
-/* Everything marked a2-only appears only while the second analyte is switched on. */
-body:not(.two-analytes) .a2-only { display: none !important; }
+/* a1-only / a2-only follow each analyte's tick box; both-only needs both on. */
+body:not(.show-a1) .a1-only,
+body:not(.show-a2) .a2-only,
+body:not(.two-analytes) .both-only { display: none !important; }
 
 .akey {
   display: inline-block;
@@ -232,6 +234,35 @@ input:focus-visible, summary:focus-visible {
 .card-head { margin-bottom: 10px; }
 .card-head.row { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
 .card-sub { margin: 4px 0 0; font-size: 0.85rem; color: var(--text-secondary); }
+
+/* Block frames: wavy = controls, solid = animation, dashed = calculated results. */
+.column-card { border: 2px solid var(--text-muted); }
+.plot-card, .readouts { border: 2px dashed var(--text-muted); }
+
+.controls {
+  position: relative;
+  border-color: transparent;
+  border-radius: 4px;
+  --wave-h: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='8'%3E%3Cpath d='M0 4 Q4 0.8 8 4 T16 4' fill='none' stroke='%23000' stroke-width='1.8'/%3E%3C/svg%3E");
+  --wave-v: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='16'%3E%3Cpath d='M4 0 Q0.8 4 4 8 T4 16' fill='none' stroke='%23000' stroke-width='1.8'/%3E%3C/svg%3E");
+}
+.controls::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  pointer-events: none;
+  background: var(--text-muted);
+  -webkit-mask:
+    var(--wave-h) left top / 16px 8px round no-repeat,
+    var(--wave-h) left bottom / 16px 8px round no-repeat,
+    var(--wave-v) left top / 8px 16px no-repeat round,
+    var(--wave-v) right top / 8px 16px no-repeat round;
+  mask:
+    var(--wave-h) left top / 16px 8px round no-repeat,
+    var(--wave-h) left bottom / 16px 8px round no-repeat,
+    var(--wave-v) left top / 8px 16px no-repeat round,
+    var(--wave-v) right top / 8px 16px no-repeat round;
+}
 
 /* ---------- Controls ---------- */
 
@@ -407,12 +438,12 @@ th { color: var(--text-secondary); font-weight: 600; }
 .readouts { display: flex; flex-direction: column; gap: 16px; }
 
 .tile-label { display: block; font-size: 0.82rem; color: var(--text-secondary); }
-.hero { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 12px 24px; }
+/* One identical plate-height block per analyte shown. */
+.hero { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px 24px; }
 .hero-value { display: block; font-size: 3rem; font-weight: 650; line-height: 1.1; letter-spacing: -0.02em; margin-top: 2px; }
-.hero-2 { display: flex; flex-wrap: wrap; align-items: center; gap: 0 4px; margin: 8px 0 0; font-size: 0.88rem; color: var(--text-secondary); }
-.hero-2 strong { color: var(--text-primary); font-weight: 600; }
-.hero-rs { min-width: 150px; }
-.rs-value { display: block; font-size: 2rem; font-weight: 650; line-height: 1.1; margin-top: 2px; }
+.two-analytes .hero-value { font-size: 2.4rem; }
+.rs-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; padding-top: 10px; border-top: 1px solid var(--grid); }
+.rs-value { font-size: 1.6rem; font-weight: 650; line-height: 1.1; }
 .parts { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 6px; font-size: 0.88rem; color: var(--text-secondary); }
 .parts span { display: inline-flex; align-items: center; gap: 6px; }
 .parts strong { color: var(--text-primary); font-weight: 600; }

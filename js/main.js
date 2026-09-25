@@ -1,8 +1,9 @@
 /*
  * Wires the controls to the model, the simulations, and the views.
- * Analyte 1 is always shown; analyte 2 can be switched on and has its own
- * mass-transfer (affinity) slider. Both share the column, flow, temperature
- * and diffusion coefficient, so they differ only in k and therefore in C.
+ * Two analytes, each with its own tick box and stationary-phase-affinity
+ * slider; at least one is always shown. Both share the column, flow,
+ * temperature and diffusion coefficient, so they differ only in k and
+ * therefore in C.
  */
 (function () {
   'use strict';
@@ -14,14 +15,14 @@
   var TIME_COMPRESSION = 10;    // column seconds per screen second at 1× speed
   var INJECT_FRACTION = 0.018;  // injected plug width as a fraction of the column (at ×9)
   var K_MIN = 0.3, K_MAX = 10;  // retention-factor range of the SP-affinity sliders
+  var SUB = ['₁', '₂'];
 
   function $(id) { return document.getElementById(id); }
 
   var els = {
-    flow: $('flow'), temp: $('temp'), dp: $('dp'), mt: $('mt'), mt2: $('mt2'), a2On: $('a2-on'),
+    flow: $('flow'), temp: $('temp'), dp: $('dp'),
     flowOut: $('flow-out'), flowSub: $('flow-sub'),
     tempOut: $('temp-out'), dpOut: $('dp-out'),
-    mtOut: $('mt-out'), mtSub: $('mt-sub'), mt2Out: $('mt2-out'), mt2Sub: $('mt2-sub'),
     inject: $('inject'), pause: $('pause'), speed: $('speed'),
     ghost: $('ghost'), trueScale: $('truescale'), auto: $('auto'), autoY: $('autoy'),
     scaleNote: $('scale-note'), live: $('live'), theme: $('theme'),
@@ -30,7 +31,6 @@
 
   var state = {
     terms: { A: true, B: true, C: true },
-    twoAnalytes: false,
     paused: false,
     speed: 1,
     ghost: true,
@@ -39,15 +39,19 @@
     autoY: false
   };
 
+  // suffix: the id suffix of this analyte's readout elements ('' or '2').
   var analytes = [
-    { sim: new window.VDSim(N_MOLECULES), slider: els.mt, color: '--analyte' },
-    { sim: new window.VDSim(N_MOLECULES), slider: els.mt2, color: '--analyte2' }
+    { id: 0, on: true, suffix: '', color: '--analyte', sim: new window.VDSim(N_MOLECULES),
+      check: $('a1-on'), slider: $('mt'), out: $('mt-out'), sub: $('mt-sub') },
+    { id: 1, on: false, suffix: '2', color: '--analyte2', sim: new window.VDSim(N_MOLECULES),
+      check: $('a2-on'), slider: $('mt2'), out: $('mt2-out'), sub: $('mt2-sub') }
   ];
   var column = new window.ColumnView($('column'), analytes, P.L);
   var band = new window.BandPlot($('band'), analytes, P.L);
   var vdPlot = new window.VanDeemterPlot($('vd'), $('vd-tip'), setFlow);
 
-  function active() { return state.twoAnalytes ? analytes : analytes.slice(0, 1); }
+  function active() { return analytes.filter(function (a) { return a.on; }); }
+  function bothOn() { return analytes[0].on && analytes[1].on; }
 
   function kFromSlider(v) { return K_MIN * Math.pow(K_MAX / K_MIN, v / 100); }
 
@@ -78,16 +82,18 @@
         A: c.A * M2, B: c.B * M2, C: c.C * M2,
         H: a.hp.H * M2, Hghost: a.opt.H * M2
       });
+      column.setVisible(a.id, a.on);
+      band.setVisible(a.id, a.on);
     });
-    document.body.classList.toggle('two-analytes', state.twoAnalytes);
-    column.setVisible(1, state.twoAnalytes);
-    band.setVisible(1, state.twoAnalytes);
+    document.body.classList.toggle('show-a1', analytes[0].on);
+    document.body.classList.toggle('show-a2', analytes[1].on);
+    document.body.classList.toggle('two-analytes', bothOn());
     band.mag = mag;
     band.showGhost = state.ghost;
     column.setParticleSize(inp.dpUm);
     vdPlot.setData({
       terms: state.terms, u: u, autoY: state.autoY,
-      analytes: active().map(function (a) { return { co: a.co, opt: a.opt }; })
+      analytes: active().map(function (a) { return { co: a.co, opt: a.opt, id: a.id }; })
     });
 
     cur = { inp: inp, u: u, mag: mag };
@@ -138,64 +144,63 @@
   }
 
   function updateControls() {
-    var inp = cur.inp, a1 = analytes[0], a2 = analytes[1], two = state.twoAnalytes;
+    var inp = cur.inp;
     var cOff = state.terms.C ? '' : ' · C·u off, so exchange between phases is instantaneous';
     els.flowOut.textContent = fmt(inp.F, 2) + ' mL/min';
     els.flowSub.textContent = 'Linear velocity u = ' + fmt(cur.u * 1000, 2) + ' mm/s';
     els.tempOut.textContent = inp.Tc + ' °C';
     els.dpOut.textContent = fmt(inp.dpUm, 1) + ' µm';
-    els.mtOut.textContent = 'k = ' + kText(a1.k);
-    els.mtSub.textContent = 'Analyte 1 affinity for the stationary phase: ' + affinityWord(a1.k) + cOff;
-    els.mt2.disabled = !two;
-    els.mt2Out.textContent = 'k = ' + kText(a2.k);
-    els.mt2Sub.textContent = 'Analyte 2 affinity for the stationary phase: ' + affinityWord(a2.k) +
-      (two ? cOff : ' · tick the box to add analyte 2');
+    var onCount = active().length;
+    analytes.forEach(function (a) {
+      var n = a.id + 1;
+      a.check.checked = a.on;
+      // The last analyte shown can't be switched off.
+      a.check.disabled = a.on && onCount === 1;
+      a.check.title = a.check.disabled ? 'At least one analyte stays on' : (a.on ? 'Hide' : 'Show') + ' analyte ' + n;
+      a.slider.disabled = !a.on;
+      a.out.textContent = 'k = ' + kText(a.k);
+      a.sub.textContent = 'Analyte ' + n + ' affinity for the stationary phase: ' + affinityWord(a.k) +
+        (a.on ? cOff : ' · tick the box to add analyte ' + n);
+    });
     Array.prototype.forEach.call(document.querySelectorAll('[data-dp]'), function (b) {
       b.setAttribute('aria-pressed', String(Math.abs(+b.dataset.dp - inp.dpUm) < 0.05));
     });
   }
 
   function updateReadouts() {
-    var a1 = analytes[0], a2 = analytes[1], two = state.twoAnalytes, u = cur.u;
-    var hp = a1.hp, co = a1.co;
+    var u = cur.u, co = analytes[0].co, list = active();
     function um(h) { return fmt(h * 1e6, 1); }
     function plates(h) { return h > 0 ? Math.round(P.L / h).toLocaleString() : '∞'; }
-    function uopt(a) { return a.opt.u !== null ? fmt(a.opt.u * 1000, 2) + ' mm/s' : 'any'; }
 
-    setText('r-H', um(hp.H) + ' µm');
-    setText('r-A', state.terms.A ? um(hp.A) : 'off');
-    setText('r-B', state.terms.B ? um(hp.B) : 'off');
-    setText('r-C', state.terms.C ? um(hp.C) : 'off');
-    setText('r-H2', um(a2.hp.H));
-    setText('r-C2', state.terms.C ? um(a2.hp.C) : 'off');
+    analytes.forEach(function (a) {
+      var s = a.suffix, hp = a.hp;
+      setText('r-H' + s, um(hp.H) + ' µm');
+      setText('r-A' + s, state.terms.A ? um(hp.A) : 'off');
+      setText('r-B' + s, state.terms.B ? um(hp.B) : 'off');
+      setText('r-C' + s, state.terms.C ? um(hp.C) : 'off');
+      setText('r-N' + s, plates(hp.H));
+      setText('r-uopt' + s, a.opt.u !== null ? fmt(a.opt.u * 1000, 2) + ' mm/s' : 'any');
+      setText('r-tR' + s, minutes(VD.times(u, a.k).tR));
+      setText('r-sigma' + s, fmt(4 * Math.sqrt(hp.H * P.L) * 1000, 2) + ' mm');
+    });
 
-    setText('r-N', plates(hp.H));
-    setText('r-N2', plates(a2.hp.H));
-
-    setText('r-uopt', uopt(a1));
-    setText('r-uopt2', uopt(a2));
-    if (a1.opt.u === null) {
+    if (list[0].opt.u === null) {
       setText('r-uopt-sub', 'H does not depend on flow');
     } else {
-      var edge = active().some(function (a) { return !a.opt.interior; }) ? ' (edge of range)' : '';
+      var edge = list.some(function (a) { return !a.opt.interior; }) ? ' (edge of range)' : '';
       setText('r-uopt-sub', both(function (a) { return fmt(VD.flowFromVelocity(a.opt.u), 2); }, ' / ') +
         ' mL/min · H_min ' + both(function (a) { return um(a.opt.H); }, ' / ') + ' µm' + edge);
     }
-
-    setText('r-tR', minutes(VD.times(u, a1.k).tR));
-    setText('r-tR2', minutes(VD.times(u, a2.k).tR));
-    setText('r-tR-sub', 't₀ = ' + minutes(VD.times(u, a1.k).t0) + ' · k = ' + both(function (a) { return kText(a.k); }));
-    setText('r-sigma', fmt(4 * Math.sqrt(hp.H * P.L) * 1000, 2) + ' mm');
-    setText('r-sigma2', fmt(4 * Math.sqrt(a2.hp.H * P.L) * 1000, 2) + ' mm');
-    setText('r-frac-sub', (two ? 'Theory ' : 'Theory k/(1+k) = ') +
+    setText('r-tR-sub', 't₀ = ' + minutes(VD.times(u, 0).t0) + ' · k = ' + both(function (a) { return kText(a.k); }));
+    setText('r-frac-sub', (list.length > 1 ? 'Theory ' : 'Theory k/(1+k) = ') +
       both(function (a) { return Math.round(100 * a.k / (1 + a.k)) + '%'; }) +
       (state.terms.C ? '' : ' · instant exchange'));
 
-    if (two) {
+    if (bothOn()) {
       var rs = resolution(u);
       setText('r-Rs', isFinite(rs) ? fmt(rs, rs < 10 ? 2 : 1) : '∞');
       var drawn = cur.mag > 1 && isFinite(rs) ? 'Real column; ≈ ' + fmt(rs / cur.mag, 1) + ' as drawn' : 'Real column';
-      setText('r-Rs-sub', (a1.k === a2.k ? 'Co-eluting · ' : '') + drawn + ' · baseline at Rs ≥ 1.5');
+      setText('r-Rs-sub', (analytes[0].k === analytes[1].k ? 'Co-eluting · ' : '') + drawn + ' · baseline at Rs ≥ 1.5');
     }
 
     setText('r-Dm', fmt(co.Dm * 1e9, 2) + ' × 10⁻⁹ m²/s');
@@ -215,32 +220,35 @@
   }
 
   function updateLive() {
-    var list = active(), a1 = analytes[0];
-    setText('r-frac', Math.round(a1.sim.stats().fracStationary * 100) + '%');
-    if (state.twoAnalytes) setText('r-frac2', Math.round(analytes[1].sim.stats().fracStationary * 100) + '%');
-    var elapsed = a1.sim.t - a1.injectTime;
+    var list = active(), first = list[0];
+    list.forEach(function (a) {
+      setText('r-frac' + a.suffix, Math.round(a.sim.stats().fracStationary * 100) + '%');
+    });
+    var elapsed = first.sim.t - first.injectTime;
     function where(a) {
       var pos = Math.max(0, a.sim.center);
       return pos < P.L ? fmt(pos * 1000, 0) + ' mm' : 'the detector';
     }
     var text;
     if (list.length > 1) {
-      text = 'Band centres: analyte 1 at ' + where(a1) + ', analyte 2 at ' + where(analytes[1]);
+      text = 'Band centres: analyte 1 at ' + where(analytes[0]) + ', analyte 2 at ' + where(analytes[1]);
     } else {
-      var sigmaReal = Math.sqrt(a1.sim.variance) / cur.mag;
-      text = (a1.sim.center < P.L ? 'Band centre ' + where(a1) + ' from the inlet' : 'Band centre has reached the detector') +
+      var sigmaReal = Math.sqrt(first.sim.variance) / cur.mag;
+      text = 'Analyte ' + (first.id + 1) + ' band centre ' +
+        (first.sim.center < P.L ? where(first) + ' from the inlet' : 'has reached the detector') +
         ' · 4σ = ' + fmt(4 * sigmaReal * 1000, 2) + ' mm (real column)';
     }
     els.live.textContent = text + ' · ' + minutes(elapsed) + ' after injection';
   }
 
   function updateTable() {
-    var t = els.table, terms = state.terms, two = state.twoAnalytes;
-    var a1 = analytes[0], a2 = analytes[1];
+    var t = els.table, terms = state.terms, list = active(), two = list.length > 1;
     t.textContent = '';
-    var heads = ['Flow (mL/min)', 'u (mm/s)', 'A (µm)', 'B/u (µm)',
-      two ? 'C·u₁ (µm)' : 'C·u (µm)', two ? 'H₁ (µm)' : 'H (µm)', two ? 'N₁' : 'N'];
-    if (two) heads.push('C·u₂ (µm)', 'H₂ (µm)', 'N₂');
+    var heads = ['Flow (mL/min)', 'u (mm/s)', 'A (µm)', 'B/u (µm)'];
+    list.forEach(function (a) {
+      var s = two ? SUB[a.id] : '';
+      heads.push('C·u' + s + ' (µm)', 'H' + s + ' (µm)', 'N' + s);
+    });
     heads.push('ΔP (bar)');
     var head = t.createTHead().insertRow();
     heads.forEach(function (h) {
@@ -253,16 +261,16 @@
     function plates(h) { return h > 0 ? Math.round(P.L / h).toLocaleString() : '∞'; }
     [0.1, 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4, 5].forEach(function (F) {
       var u = VD.velocityFromFlow(F);
-      var h1 = VD.plateHeight(u, a1.co, terms), h2 = VD.plateHeight(u, a2.co, terms);
+      var hps = list.map(function (a) { return VD.plateHeight(u, a.co, terms); });
       var cells = [
         fmt(F, 2), fmt(u * 1000, 2),
-        terms.A ? fmt(h1.A * 1e6, 2) : 'off',
-        terms.B ? fmt(h1.B * 1e6, 2) : 'off',
-        terms.C ? fmt(h1.C * 1e6, 2) : 'off',
-        fmt(h1.H * 1e6, 2), plates(h1.H)
+        terms.A ? fmt(hps[0].A * 1e6, 2) : 'off',
+        terms.B ? fmt(hps[0].B * 1e6, 2) : 'off'
       ];
-      if (two) cells.push(terms.C ? fmt(h2.C * 1e6, 2) : 'off', fmt(h2.H * 1e6, 2), plates(h2.H));
-      cells.push(fmt(VD.pressure(u, a1.co) / 1e5, 0));
+      hps.forEach(function (hp) {
+        cells.push(terms.C ? fmt(hp.C * 1e6, 2) : 'off', fmt(hp.H * 1e6, 2), plates(hp.H));
+      });
+      cells.push(fmt(VD.pressure(u, list[0].co) / 1e5, 0));
       var row = body.insertRow();
       cells.forEach(function (c) { row.insertCell().textContent = c; });
     });
@@ -339,15 +347,19 @@
 
   // --- events -----------------------------------------------------------------
 
-  [els.flow, els.temp, els.dp, els.mt, els.mt2].forEach(function (el) {
+  [els.flow, els.temp, els.dp].forEach(function (el) {
     el.addEventListener('input', recompute);
   });
 
-  els.a2On.addEventListener('change', function () {
-    state.twoAnalytes = els.a2On.checked;
-    recompute();
-    inject();   // start both analytes together from the inlet
-    updateLive();
+  analytes.forEach(function (a) {
+    a.slider.addEventListener('input', recompute);
+    a.check.addEventListener('change', function () {
+      a.on = a.check.checked;
+      if (!active().length) a.on = true;   // keep at least one analyte on
+      recompute();
+      inject();   // start the analytes shown together from the inlet
+      updateLive();
+    });
   });
 
   Array.prototype.forEach.call(document.querySelectorAll('[data-dp]'), function (b) {
@@ -428,7 +440,9 @@
   if (saved !== 'auto') document.documentElement.dataset.theme = saved;
   els.theme.textContent = 'Theme: ' + saved;
 
-  state.twoAnalytes = els.a2On.checked;   // browsers may restore the checkbox on reload
+  // Browsers may restore the tick boxes on reload.
+  analytes.forEach(function (a) { a.on = a.check.checked; });
+  if (!active().length) analytes[0].on = true;
   recompute();
   layout();
   refreshTheme();

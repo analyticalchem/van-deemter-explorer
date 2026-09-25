@@ -78,14 +78,14 @@
 
         <div class="control">
           <div class="control-head">
-            <label for="mt"><span class="akey a1"></span>Analyte 1 SP Affinity</label>
+            <label class="toggle" for="a1-on"><input type="checkbox" id="a1-on" checked aria-label="Show analyte 1" title="Show analyte 1"><span class="akey a1"></span>Analyte 1 SP Affinity</label>
             <output id="mt-out" for="mt"></output>
           </div>
-          <input id="mt" type="range" min="0" max="100" step="1" value="54">
+          <input id="mt" type="range" min="0" max="100" step="1" value="54" aria-label="Analyte 1 SP Affinity">
           <p class="control-sub" id="mt-sub"></p>
         </div>
 
-        <div class="control control-a2">
+        <div class="control">
           <div class="control-head">
             <label class="toggle" for="a2-on"><input type="checkbox" id="a2-on" aria-label="Show analyte 2" title="Show analyte 2"><span class="akey a2"></span>Analyte 2 SP Affinity</label>
             <output id="mt2-out" for="mt2"></output>
@@ -124,7 +124,7 @@
       <canvas id="band" class="band-canvas" role="img"
         aria-label="Distribution of analyte along the column: histogram of the molecules and the predicted Gaussian band."></canvas>
       <div class="legend">
-        <span class="lg"><span class="lg-sphere"></span><span>Analyte<span class="a2-only">&nbsp;1</span> molecule</span></span>
+        <span class="lg a1-only"><span class="lg-sphere"></span>Analyte 1 molecule</span>
         <span class="lg a2-only"><span class="lg-sphere a2"></span>Analyte 2 molecule</span>
         <span class="lg"><span class="lg-particle"></span>Support particle with stationary liquid film</span>
         <span class="lg"><span class="lg-streak"></span>Mobile-phase flow</span>
@@ -147,13 +147,12 @@
           <div id="vd-tip" class="tooltip" hidden></div>
         </div>
         <div class="legend">
-          <span class="lg"><span class="lg-key" style="--key: var(--text-primary)"></span><span>H, total<span class="a2-only">&nbsp;(analyte 1)</span></span></span>
-          <span class="lg a2-only"><span class="lg-key dashed" style="--key: var(--text-primary)"></span>Dashed curves and ◆: analyte 2</span>
+          <span class="lg a1-only"><span class="lg-key" style="--key: var(--text-primary)"></span>Analyte 1: solid curves, ● current flow, ○ optimum</span>
+          <span class="lg a2-only"><span class="lg-key dashed" style="--key: var(--text-primary)"></span>Analyte 2: dashed curves, ◆ current flow, ◇ optimum</span>
+          <span class="lg"><span class="lg-key" style="--key: var(--text-primary)"></span>H, total</span>
           <span class="lg"><span class="lg-key" style="--key: var(--series-a)"></span>A</span>
           <span class="lg"><span class="lg-key" style="--key: var(--series-b)"></span>B/u</span>
           <span class="lg"><span class="lg-key" style="--key: var(--series-c)"></span>C·u</span>
-          <span class="lg"><span class="lg-dot"></span>Current flow</span>
-          <span class="lg"><span class="lg-ring"></span>Optimum</span>
           <span class="lg"><span class="lg-wash" style="--key: var(--status-warning)"></span>▲ &gt; 400 bar</span>
           <span class="lg"><span class="lg-wash" style="--key: var(--status-critical)"></span>✕ &gt; 1300 bar</span>
         </div>
@@ -165,8 +164,8 @@
 
       <section class="card readouts" aria-label="Results">
         <div class="hero">
-          <div class="hero-main">
-            <span class="tile-label">Plate height, H<span class="a2-only">, analyte 1</span></span>
+          <div class="hero-block a1-only">
+            <span class="tile-label"><span class="akey a1"></span>Plate height, H · analyte 1</span>
             <span class="hero-value" id="r-H"></span>
             <div class="parts">
               <span><span class="lg-key" style="--key: var(--series-a)"></span>A <strong id="r-A"></strong></span>
@@ -174,42 +173,51 @@
               <span><span class="lg-key" style="--key: var(--series-c)"></span>C·u <strong id="r-C"></strong></span>
               <span class="parts-unit">µm</span>
             </div>
-            <p class="hero-2 a2-only"><span class="akey a2"></span>Analyte 2: H = <strong id="r-H2"></strong> µm, C·u <strong id="r-C2"></strong> µm</p>
           </div>
-          <div class="hero-rs a2-only">
-            <span class="tile-label">Resolution, R<sub>s</sub></span>
-            <span class="rs-value" id="r-Rs"></span>
-            <span class="tile-sub" id="r-Rs-sub"></span>
+          <div class="hero-block a2-only">
+            <span class="tile-label"><span class="akey a2"></span>Plate height, H · analyte 2</span>
+            <span class="hero-value" id="r-H2"></span>
+            <div class="parts">
+              <span><span class="lg-key" style="--key: var(--series-a)"></span>A <strong id="r-A2"></strong></span>
+              <span><span class="lg-key" style="--key: var(--series-b)"></span>B/u <strong id="r-B2"></strong></span>
+              <span><span class="lg-key" style="--key: var(--series-c)"></span>C·u <strong id="r-C2"></strong></span>
+              <span class="parts-unit">µm</span>
+            </div>
           </div>
+        </div>
+        <div class="rs-row both-only">
+          <span class="tile-label">Resolution, R<sub>s</sub></span>
+          <span class="rs-value" id="r-Rs"></span>
+          <span class="tile-sub" id="r-Rs-sub"></span>
         </div>
         <div class="tiles">
           <div class="tile">
             <span class="tile-label">Theoretical plates, N</span>
-            <span class="tile-value"><span class="akey a1 a2-only"></span><span id="r-N"></span></span>
+            <span class="tile-value a1-only"><span class="akey a1"></span><span id="r-N"></span></span>
             <span class="tile-value a2-only"><span class="akey a2"></span><span id="r-N2"></span></span>
             <span class="tile-sub">N = L / H for a 150 mm column</span>
           </div>
           <div class="tile">
             <span class="tile-label">Optimum velocity</span>
-            <span class="tile-value"><span class="akey a1 a2-only"></span><span id="r-uopt"></span></span>
+            <span class="tile-value a1-only"><span class="akey a1"></span><span id="r-uopt"></span></span>
             <span class="tile-value a2-only"><span class="akey a2"></span><span id="r-uopt2"></span></span>
             <span class="tile-sub" id="r-uopt-sub"></span>
           </div>
           <div class="tile">
             <span class="tile-label">Retention time</span>
-            <span class="tile-value"><span class="akey a1 a2-only"></span><span id="r-tR"></span></span>
+            <span class="tile-value a1-only"><span class="akey a1"></span><span id="r-tR"></span></span>
             <span class="tile-value a2-only"><span class="akey a2"></span><span id="r-tR2"></span></span>
             <span class="tile-sub" id="r-tR-sub"></span>
           </div>
           <div class="tile">
             <span class="tile-label">Peak width at outlet, 4σ</span>
-            <span class="tile-value"><span class="akey a1 a2-only"></span><span id="r-sigma"></span></span>
+            <span class="tile-value a1-only"><span class="akey a1"></span><span id="r-sigma"></span></span>
             <span class="tile-value a2-only"><span class="akey a2"></span><span id="r-sigma2"></span></span>
             <span class="tile-sub">Real column, from σ² = H·L</span>
           </div>
           <div class="tile">
             <span class="tile-label">In stationary phase now</span>
-            <span class="tile-value"><span class="akey a1 a2-only"></span><span id="r-frac"></span></span>
+            <span class="tile-value a1-only"><span class="akey a1"></span><span id="r-frac"></span></span>
             <span class="tile-value a2-only"><span class="akey a2"></span><span id="r-frac2"></span></span>
             <span class="tile-sub" id="r-frac-sub"></span>
           </div>
@@ -254,7 +262,7 @@
             <li><strong>Temperature</strong> changes D<sub>m</sub> ∝ T/η (Wilke–Chang scaling, 1.0 × 10⁻⁹ m²/s at 25 °C) and the viscosity of an aqueous mobile phase. It doesn’t change k here; in a real separation, retention usually drops as temperature rises.</li>
             <li><strong>Particle size</strong> scales A with d<sub>p</sub> and C with d<sub>p</sub>², and sets the back-pressure ΔP = φηLu/d<sub>p</sub>² (φ = 700).</li>
             <li><strong>Analyte 1 SP Affinity</strong> (and <strong>Analyte 2 SP Affinity</strong>) set each analyte’s affinity for the stationary phase (SP), expressed as the retention factor k. Stronger affinity means longer stays in the film and a larger C term. Switching the C·u term off makes exchange between the phases instantaneous: the analyte is still retained and travels at u/(1 + k), slower than the mobile phase, but every molecule keeps the same average speed, so mass transfer adds no broadening.</li>
-            <li><strong>Analyte 2</strong> (tick the box beside Analyte 2 SP Affinity) adds a second compound, injected with the first, that has its own affinity for the stationary phase (its own k) but the same diffusion coefficient. Only its C term differs, so it has its own van Deemter curve (dashed). Resolution is R<sub>s</sub> = (t<sub>R2</sub> − t<sub>R1</sub>) / [2(σ<sub>t1</sub> + σ<sub>t2</sub>)], using each band’s width in time at the outlet.</li>
+            <li><strong>Analyte 2</strong> (tick the box beside Analyte 2 SP Affinity) adds a second compound, injected with the first. Either analyte can be switched off with its own tick box, as long as one stays on. The second compound has its own affinity for the stationary phase (its own k) but the same diffusion coefficient. Only its C term differs, so it has its own van Deemter curve (dashed). Resolution is R<sub>s</sub> = (t<sub>R2</sub> − t<sub>R1</sub>) / [2(σ<sub>t1</sub> + σ<sub>t2</sub>)], using each band’s width in time at the outlet.</li>
           </ul>
           <h3>What the animation shows</h3>
           <p>Each molecule alternates between flowing with the mobile phase and sitting still in the stationary liquid film on a particle. On average it spends k/(1 + k) of its time in the film, so the band moves at u/(1 + k). The random lengths of those stays produce the C·u broadening. The A and B/u terms are added as random variation in each flowing step. The histogram of molecules and the Gaussian predicted from σ² = H·x come from the same numbers, so they should agree.</p>

@@ -288,8 +288,8 @@
   }
 
   /**
-   * d = { terms, u, autoY, analytes: [{ co, opt }] } — one entry per analyte
-   * shown; the first is drawn solid, the second dashed.
+   * d = { terms, u, autoY, analytes: [{ co, opt, id }] } — one entry per
+   * analyte shown; id 0 (analyte 1) is drawn solid, id 1 (analyte 2) dashed.
    */
   VanDeemterPlot.prototype.setData = function (d) {
     this.data = d;
@@ -370,13 +370,13 @@
     head.className = 'tip-head';
     head.textContent = 'u = ' + fmt(u * 1000, 2) + ' mm/s · ' + fmt(VD.flowFromVelocity(u), 2) + ' mL/min';
     tip.appendChild(head);
-    hps.forEach(function (hp, i) {
-      row(um(hp.H), two ? 'H' + SUB[i] + ' (analyte ' + (i + 1) + ')' : 'H (total)', C.text, i === 1);
+    d.analytes.forEach(function (a, i) {
+      row(um(hps[i].H), (two ? 'H' + SUB[a.id] : 'H') + ' (analyte ' + (a.id + 1) + ')', C.text, a.id === 1);
     });
     if (terms.A) row(um(hps[0].A), 'A', C.A);
     if (terms.B) row(um(hps[0].B), 'B/u', C.B);
     if (terms.C) {
-      hps.forEach(function (hp, i) { row(um(hp.C), two ? 'C·u' + SUB[i] : 'C·u', C.C, i === 1); });
+      d.analytes.forEach(function (a, i) { row(um(hps[i].C), two ? 'C·u' + SUB[a.id] : 'C·u', C.C, a.id === 1); });
     }
     row(fmt(VD.pressure(u, d.analytes[0].co) / 1e5, 0) + ' bar', 'back-pressure', null);
     var hint = document.createElement('div');
@@ -526,11 +526,11 @@
     // A and B/u are the same for both analytes (same particles, same Dm).
     if (terms.A) plot(function () { return co0.A; }, C.A, 2);
     if (terms.B) plot(function (u) { return co0.B / u; }, C.B, 2);
-    analytes.forEach(function (a, i) {
-      if (terms.C) plot(function (u) { return a.co.C * u; }, C.C, 2, i === 1);
+    analytes.forEach(function (a) {
+      if (terms.C) plot(function (u) { return a.co.C * u; }, C.C, 2, a.id === 1);
     });
-    analytes.forEach(function (a, i) {
-      plot(function (u) { return VD.plateHeight(u, a.co, terms).H; }, C.text, 2.5, i === 1);
+    analytes.forEach(function (a) {
+      plot(function (u) { return VD.plateHeight(u, a.co, terms).H; }, C.text, 2.5, a.id === 1);
     });
 
     // Hover crosshair.
@@ -559,8 +559,8 @@
     if (terms.B) endLabel('B/u', function (u) { return co0.B / u; }, null, 2);
     analytes.forEach(function (a, i) {
       var co = a.co;
-      if (terms.C) endLabel('C·u' + sub(i), function (u) { return co.C * u; }, function (h) { return h / co.C; }, 3 - i * 0.5);
-      endLabel('H' + sub(i), function (u) { return VD.plateHeight(u, co, terms).H; }, function (h) {
+      if (terms.C) endLabel('C·u' + sub(a.id), function (u) { return co.C * u; }, function (h) { return h / co.C; }, 3 - i * 0.5);
+      endLabel('H' + sub(a.id), function (u) { return VD.plateHeight(u, co, terms).H; }, function (h) {
         var c = VD.activeCoefficients(co, terms);
         if (!c.C) return -1;
         var bq = c.A - h, disc = bq * bq - 4 * c.C * c.B;
@@ -580,21 +580,37 @@
       haloText(g, lb.text, lb.x, lb.y, C.surface);
     });
 
+    // Marker shapes: analyte 1 a circle, analyte 2 a diamond (hollow at the
+    // optimum, solid at the current flow), matching solid vs dashed curves.
+    function markerPath(id, x, y, r) {
+      g.beginPath();
+      if (id === 1) {
+        var s = r * 1.25;
+        g.moveTo(x, y - s);
+        g.lineTo(x + s, y);
+        g.lineTo(x, y + s);
+        g.lineTo(x - s, y);
+        g.closePath();
+      } else {
+        g.arc(x, y, r, 0, Math.PI * 2);
+      }
+    }
+
     // Optimum markers.
     var optLabels = [];
-    analytes.forEach(function (a, i) {
+    analytes.forEach(function (a) {
       var opt = a.opt;
       if (opt.u === null) return;
       var ox = X(opt.u), oy = Y(opt.H);
       if (oy < top || oy > bot) return;
-      g.beginPath();
-      g.arc(ox, oy, 5, 0, Math.PI * 2);
+      markerPath(a.id, ox, oy, 5);
       g.fillStyle = C.surface;
       g.fill();
       g.strokeStyle = C.text;
       g.lineWidth = 2;
+      g.lineJoin = 'miter';
       g.stroke();
-      var text = opt.interior ? 'u_opt' + sub(i) : 'best in range' + sub(i);
+      var text = opt.interior ? 'u_opt' + sub(a.id) : 'best in range' + sub(a.id);
       // Put the second label above its marker if it would collide with the first.
       var above = optLabels.some(function (p) { return Math.abs(p.x - ox) < 48 && Math.abs(p.y - oy) < 24; });
       optLabels.push({ x: ox, y: oy });
@@ -608,7 +624,7 @@
     var cx = X(d.u);
     var pts = hNow.map(function (h, i) {
       var cy = Y(h), off = cy < top;
-      return { i: i, h: h, cy: off ? top + 8 + i * 14 : cy, off: off };
+      return { i: i, id: analytes[i].id, h: h, cy: off ? top + 8 + i * 14 : cy, off: off };
     });
     var lowest = Math.max.apply(null, pts.map(function (p) { return p.cy; }));
     g.strokeStyle = C.text2;
@@ -624,27 +640,20 @@
       g.arc(cx, p.cy, 7, 0, Math.PI * 2);
       g.fill();
       g.fillStyle = C.text;
-      g.beginPath();
       if (p.off) {
+        g.beginPath();
         g.moveTo(cx, p.cy - 6);
         g.lineTo(cx + 5.5, p.cy + 4);
         g.lineTo(cx - 5.5, p.cy + 4);
         g.closePath();
-      } else if (p.i === 1) {
-        // Analyte 2: a diamond, matching its dashed curve's secondary role.
-        g.moveTo(cx, p.cy - 6);
-        g.lineTo(cx + 6, p.cy);
-        g.lineTo(cx, p.cy + 6);
-        g.lineTo(cx - 6, p.cy);
-        g.closePath();
       } else {
-        g.arc(cx, p.cy, 5, 0, Math.PI * 2);
+        markerPath(p.id, cx, p.cy, 5);
       }
       g.fill();
     });
     g.font = '600 12px ' + FONT;
     pts.forEach(function (p) {
-      var tx = 'H' + sub(p.i) + ' = ' + fmt(p.h * 1e6, 1) + ' µm' + (p.off ? ' (off scale)' : '');
+      var tx = 'H' + sub(p.id) + ' = ' + fmt(p.h * 1e6, 1) + ' µm' + (p.off ? ' (off scale)' : '');
       var tw = g.measureText(tx).width;
       var lx = cx + 12, align = 'left';
       if (lx + tw > right - 4) { lx = cx - 12; align = 'right'; }

@@ -42,7 +42,10 @@
   </header>
 
   <main>
-    <section class="card controls" aria-label="Column conditions">
+    <section class="card controls" aria-labelledby="controls-title">
+      <div class="card-head">
+        <h2 id="controls-title">Column Conditions</h2>
+      </div>
       <div class="sliders">
         <div class="control">
           <div class="control-head">
@@ -116,7 +119,7 @@
 
     <section class="card column-card" aria-labelledby="column-title">
       <div class="card-head">
-        <h2 id="column-title">Inside the column</h2>
+        <h2 id="column-title">Inside the Column</h2>
         <p class="card-sub" id="scale-note"></p>
       </div>
       <canvas id="column" class="column-canvas" role="img"
@@ -138,7 +141,7 @@
     <div class="grid-2">
       <section class="card plot-card" aria-labelledby="vd-title">
         <div class="card-head row">
-          <h2 id="vd-title">Van Deemter plot</h2>
+          <h2 id="vd-title">Van Deemter Plot</h2>
           <label class="check small"><input type="checkbox" id="autoy"> Auto-scale H axis</label>
         </div>
         <div class="plot-wrap">
@@ -162,7 +165,10 @@
         </details>
       </section>
 
-      <section class="card readouts" aria-label="Results">
+      <section class="card readouts" aria-labelledby="results-title">
+        <div class="card-head">
+          <h2 id="results-title">Calculated Results</h2>
+        </div>
         <div class="hero">
           <div class="hero-block a1-only">
             <span class="tile-label hero-title"><span class="akey a1"></span>Plate Height, H <span class="nowrap">(Analyte 1)</span></span>
@@ -250,7 +256,7 @@
 
     <section class="card notes">
       <details>
-        <summary>About the model and the animation</summary>
+        <summary>About the Model and the Animation</summary>
         <div class="notes-body">
           <h3>Equation</h3>
           <p>H = A + B/u + C·u, with A = 2λd<sub>p</sub> (λ = 0.5), B = 2γD<sub>m</sub> (γ = 0.7), and C = C<sub>m</sub> + C<sub>s</sub>.

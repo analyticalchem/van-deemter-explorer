@@ -146,7 +146,8 @@ body {
 
 h1, h2, h3 { line-height: 1.2; margin: 0; }
 h1 { font-size: 1.75rem; font-weight: 650; letter-spacing: -0.01em; }
-h2 { font-size: 1.05rem; font-weight: 620; }
+/* Panel titles: title case, bold, and the largest text inside each panel. */
+h2 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.005em; }
 h3 { font-size: 0.95rem; font-weight: 620; margin: 1rem 0 0.35rem; }
 
 .site-header, main, .site-footer {
@@ -231,7 +232,7 @@ input:focus-visible, summary:focus-visible {
   min-width: 0;
 }
 
-.card-head { margin-bottom: 10px; }
+.card-head { margin-bottom: 12px; }
 .card-head.row { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
 .card-sub { margin: 4px 0 0; font-size: 0.85rem; color: var(--text-secondary); }
 
@@ -417,10 +418,9 @@ th { color: var(--text-secondary); font-weight: 600; }
 .hero { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px 24px; }
 .hero-title { font-size: 1.05rem; font-weight: 620; color: var(--text-primary); }
 .nowrap { white-space: nowrap; }
-.hero-value { display: block; font-size: 3rem; font-weight: 650; line-height: 1.1; letter-spacing: -0.02em; margin-top: 2px; }
-.two-analytes .hero-value { font-size: 2.4rem; }
+.hero-value { display: block; font-size: 1.25rem; font-weight: 650; line-height: 1.2; margin-top: 4px; }
 .rs-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; padding-top: 10px; border-top: 1px solid var(--grid); }
-.rs-value { font-size: 1.6rem; font-weight: 650; line-height: 1.1; }
+.rs-value { font-size: 1.25rem; font-weight: 650; line-height: 1.2; }
 .parts { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 6px; font-size: 0.88rem; color: var(--text-secondary); }
 .parts span { display: inline-flex; align-items: center; gap: 6px; }
 .parts strong { color: var(--text-primary); font-weight: 600; }
@@ -466,7 +466,7 @@ th { color: var(--text-secondary); font-weight: 600; }
 
 /* ---------- Notes / footer ---------- */
 
-.notes summary { cursor: pointer; font-weight: 600; }
+.notes summary { cursor: pointer; font-size: 1.4rem; font-weight: 700; line-height: 1.2; }
 .notes-body { max-width: 80ch; color: var(--text-secondary); font-size: 0.92rem; }
 .notes-body p, .notes-body ul { margin: 0.3rem 0 0.6rem; }
 .notes-body h3 { color: var(--text-primary); }
@@ -482,12 +482,11 @@ th { color: var(--text-secondary); font-weight: 600; }
 
 @media (max-width: 560px) {
   .site-header, main, .site-footer { padding-left: 16px; padding-right: 16px; }
-  h1 { font-size: 1.4rem; }
+  h1 { font-size: 1.6rem; }
   .card { padding: 14px; }
   .sliders { grid-template-columns: minmax(0, 1fr); }
   .term { padding: 6px 10px; }
   .term-name { display: none; }
-  .hero-value { font-size: 2.4rem; }
   .vd-canvas { height: 280px; }
   .meter-scale span:last-child { display: none; }
 }

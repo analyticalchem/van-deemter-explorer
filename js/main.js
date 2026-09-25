@@ -13,7 +13,7 @@
   var MAG = 9;                  // band-width magnification in the animation (variance ×81)
   var TIME_COMPRESSION = 10;    // column seconds per screen second at 1× speed
   var INJECT_FRACTION = 0.018;  // injected plug width as a fraction of the column (at ×9)
-  var K_MIN = 0.3, K_MAX = 10;  // retention-factor range of the mass-transfer sliders
+  var K_MIN = 0.3, K_MAX = 10;  // retention-factor range of the SP-affinity sliders
 
   function $(id) { return document.getElementById(id); }
 
@@ -147,13 +147,11 @@
     els.tempOut.textContent = inp.Tc + ' °C';
     els.dpOut.textContent = fmt(inp.dpUm, 1) + ' µm';
     els.mtOut.textContent = 'k = ' + kText(a1.k);
-    els.mtSub.textContent = (two ? 'Analyte 1' : 'Analyte') + ' affinity for the stationary phase: ' +
-      affinityWord(a1.k) + cOff;
+    els.mtSub.textContent = 'Analyte 1 affinity for the stationary phase: ' + affinityWord(a1.k) + cOff;
     els.mt2.disabled = !two;
-    els.mt2Out.textContent = two ? 'k = ' + kText(a2.k) : 'off';
-    els.mt2Sub.textContent = two
-      ? 'Mass transfer: affinity for the stationary phase: ' + affinityWord(a2.k)
-      : 'Tick to inject a second analyte with its own mass transfer';
+    els.mt2Out.textContent = 'k = ' + kText(a2.k);
+    els.mt2Sub.textContent = 'Analyte 2 affinity for the stationary phase: ' + affinityWord(a2.k) +
+      (two ? cOff : ' · tick the box to add analyte 2');
     Array.prototype.forEach.call(document.querySelectorAll('[data-dp]'), function (b) {
       b.setAttribute('aria-pressed', String(Math.abs(+b.dataset.dp - inp.dpUm) < 0.05));
     });

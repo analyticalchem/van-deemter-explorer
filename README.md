@@ -4,7 +4,7 @@ An interactive, browser-based demonstration of the van Deemter equation for part
 
 **H = A + B/u + C·u**
 
-Analyte molecules flow through a packed column, stop in the stationary liquid film when they touch the packing, and then rejoin the mobile phase. Under the column, a Gaussian band profile shows how wide the analyte packet has become. The van Deemter plot shows where the current flow rate sits on the curve. A second analyte, with its own mass transfer, can be switched on to show how the two bands separate and how resolution depends on flow rate.
+Analyte molecules flow through a packed column, stop in the stationary liquid film when they touch the packing, and then rejoin the mobile phase. Under the column, a Gaussian band profile shows how wide the analyte packet has become. The van Deemter plot shows where the current flow rate sits on the curve. A second analyte, with its own stationary-phase affinity, can be switched on to show how the two bands separate and how resolution depends on flow rate.
 
 No build step and no dependencies: plain HTML, CSS and JavaScript.
 
@@ -20,8 +20,8 @@ No build step and no dependencies: plain HTML, CSS and JavaScript.
 | **Flow rate** (0.05–5 mL/min) | Sets the linear velocity u through a 150 × 4.6 mm column (total porosity 0.65). |
 | **Temperature** (20–80 °C) | Raises the analyte diffusion coefficient D<sub>m</sub> ∝ T/η and lowers the mobile-phase viscosity η. B grows, C shrinks, and u<sub>opt</sub> moves to higher flow. |
 | **Particle size** (1.5–10 µm) | A ∝ d<sub>p</sub> and C ∝ d<sub>p</sub>², so smaller particles give lower, flatter curves. Back-pressure ∝ 1/d<sub>p</sub>². |
-| **Mass transfer** (k = 0.3–10) | The analyte's affinity for the stationary phase, expressed as the retention factor k. Stronger affinity means longer stays in the film, a larger C term and a longer retention time. |
-| **Second analyte** (on/off, with its own mass-transfer slider) | Injects a second compound (green) together with the first (violet). It has its own k but the same diffusion coefficient, so only its C term differs. It gets its own band, its own dashed van Deemter curve and C·u line, and paired readouts, plus the resolution R<sub>s</sub> between the two bands. Switching it on starts a fresh injection. |
+| **Analyte 1 SP Affinity** (k = 0.3–10) | The analyte's affinity for the stationary phase (SP), expressed as the retention factor k. Stronger affinity means longer stays in the film, a larger C term and a longer retention time. |
+| **Analyte 2 SP Affinity** (tick box plus its own slider, k = 0.3–10) | The tick box injects a second compound (green) together with the first (violet). It has its own k but the same diffusion coefficient, so only its C term differs. It gets its own band, its own dashed van Deemter curve and C·u line, and paired readouts, plus the resolution R<sub>s</sub> between the two bands. Switching it on starts a fresh injection. |
 | **Term toggles** (A multipath effect, B/u longitudinal diffusion, C·u mass transfer) | Switch a term off in both the plot and the animation. Switching C·u off makes exchange between the phases instantaneous (the textbook meaning of C = 0): the analyte is still retained and moves at u/(1 + k), slower than the flow wisps, but mass transfer no longer broadens the band. |
 | **Ghost band** | A dashed profile showing how wide the band would be at the optimum flow rate, drawn at the same position in the column. |
 | **True-scale band** | Removes the 9× band-width magnification (see below). |

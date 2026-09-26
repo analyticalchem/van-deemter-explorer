@@ -82,26 +82,6 @@ A real column has tens of thousands of plates, and a molecule moves between the 
 
 Just after injection, the histogram runs a little wider than the predicted curve. This is because each molecule is caught partway through a hop. The difference fades as the band travels and is a few percent by the outlet. Checked in the browser with 4,000 molecules per run: the band centre matched the prediction to within 0.02 σ, the stationary-phase fraction matched k/(1 + k), and the variance at the outlet was within 8% of the prediction under every condition tested.
 
-## Accessibility
-
-Van Deemter Explorer aims to conform to the Web Content Accessibility Guidelines (WCAG) 2.1 Level AA, the standard the U.S. Department of Justice's ADA Title II web rule adopts, and follows the analyticalchem web style.
-
-What the page provides:
-
-- Every control is a native HTML control with a visible label, and works from the keyboard: Tab to move, arrow keys for sliders, Space or Enter for buttons and tick boxes. Nothing depends on dragging.
-- Every number the animation and charts show is also on the page as text: the Calculated Results panel, the running caption under the column, and the van Deemter data table.
-- The canvases have text descriptions. Chart series are told apart by labels, line style (solid or dashed) and marker shape (circle or diamond), not colour alone. Text meets 4.5:1 contrast, and chart marks and controls meet 3:1, in light and dark themes.
-- The animation can be paused (Pause, before the animation in reading order), and nothing flashes.
-- The page reflows to one column at 320 px wide and works at 200% and 400% zoom.
-- Presentation mode (above) enlarges everything for projection and raises contrast further, without changing the page structure.
-
-Known limitations:
-
-- Screen-reader testing with NVDA and VoiceOver has not been done yet.
-- The up-and-down paths of the molecules and the 9× band magnification are illustrative. The page states both, and the readouts give real-column values.
-
-To report a problem or ask for help using the page, [open an issue on GitHub](https://github.com/analyticalchem/van-deemter-explorer/issues/new) describing the page, what you were trying to do, and the browser and assistive technology you use. We aim to reply within 10 business days.
-
 ## Files
 
 ```

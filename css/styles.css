@@ -44,15 +44,18 @@
   --analyte2-hi: #9fdc9f;
   --analyte2-lo: #004400;
 
-  /* Column illustration. Meaningful parts are opaque and at least 3:1 against
-     what they sit on: film 4.1:1 on the mobile phase and 4.0:1 on the particle
-     core; flow streaks 3.1:1; the molecule edge 4.6:1 on the film. */
+  /* Column illustration. The molecules are the only dark marks in the tube, so
+     they stay the figure: violet 5.5:1 and green 3.2:1 on the amber film, and
+     5.2:1 / 3.0:1 on the particle core. Each particle's boundary is a thin
+     --film-edge outline (3.3:1 on the mobile phase). The streaks are a faint
+     flow texture (1.5:1), not data: flow rate, velocity and t0 are in the
+     readouts. */
   --mobile-bg: #eaf1f8;
-  --streak: #6d8aac;
-  --particle: #f1eee7;
-  --particle-hi: #ffffff;
-  --film: #9e6a16;
-  --molecule-edge: #ffffff;
+  --streak: #b3c5d8;
+  --particle: #cecabf;
+  --particle-hi: #f4f2ec;
+  --film: #e8cd8e;
+  --film-edge: #a67d2a;
   --frit: #d6d3ca;
   --wall: var(--text-muted);
 }
@@ -79,14 +82,15 @@
     --critical-text: #ef6a63;
     --analyte-hi: #ddd8fb;
     --analyte-lo: #4a3aa7;
-    --analyte2-hi: #7fd67f;
-    --analyte2-lo: #003a00;
+    --analyte2: #2aa52a;                   /* brighter green in dark mode: 5.1:1 on the mobile phase */
+    --analyte2-hi: #9fe69f;
+    --analyte2-lo: #145214;
     --mobile-bg: #142130;
-    --streak: #5f82a8;                     /* 4.1:1 */
-    --particle: #2c2c2a;
-    --particle-hi: #45443f;
-    --film: #d9a23a;                       /* 7.1:1 on the mobile phase, 6.1:1 on the core */
-    --molecule-edge: #0b0b0b;              /* 8.6:1 on the film */
+    --streak: #364a60;                     /* faint flow texture, 1.8:1 */
+    --particle: #45443f;                   /* molecules 3.0:1 or better on the core */
+    --particle-hi: #7a7870;
+    --film: #4a3a1c;                       /* dark film keeps the light molecules at 3.4:1 or better */
+    --film-edge: #a07a30;                  /* amber outline, 4.1:1 on the mobile phase */
     --frit: #3a3935;
   }
 }
@@ -112,14 +116,15 @@
   --critical-text: #ef6a63;
   --analyte-hi: #ddd8fb;
   --analyte-lo: #4a3aa7;
-  --analyte2-hi: #7fd67f;
-  --analyte2-lo: #003a00;
+  --analyte2: #2aa52a;
+  --analyte2-hi: #9fe69f;
+  --analyte2-lo: #145214;
   --mobile-bg: #142130;
-  --streak: #5f82a8;
-  --particle: #2c2c2a;
-  --particle-hi: #45443f;
-  --film: #d9a23a;
-  --molecule-edge: #0b0b0b;
+  --streak: #364a60;
+  --particle: #45443f;
+  --particle-hi: #7a7870;
+  --film: #4a3a1c;
+  --film-edge: #a07a30;
   --frit: #3a3935;
 }
 
@@ -384,8 +389,8 @@ select {
 .lg-particle {
   width: 14px; height: 14px; border-radius: 50%;
   background: radial-gradient(circle at 35% 35%, var(--particle-hi), var(--particle) 60%);
-  box-shadow: 0 0 0 3px var(--film);
-  margin: 0 3px;
+  box-shadow: 0 0 0 3px var(--film), 0 0 0 4px var(--film-edge);
+  margin: 0 4px;
 }
 .lg-streak { width: 16px; height: 2px; border-radius: 1px; background: var(--streak); }
 .lg-bar { width: 8px; height: 12px; border-radius: 2px 2px 0 0; background: color-mix(in srgb, var(--analyte) 30%, transparent); border-top: 2px solid var(--analyte); }
@@ -565,8 +570,9 @@ html[data-present] .present-hint { display: block; margin: 12px 0 0; color: var(
     --text-secondary: #3a3936; --text-muted: #55534f; --axis: #7f7d76; --grid: #cfcdc4;
     --series-a: #0c8259; --series-b: #bf4a1d; --series-c: #1f66c4;
     --critical-text: #a52a2a;
-    /* Project tokens at 4.5:1 or better: green 5.3:1, film 4.8:1, streaks 4.7:1. */
-    --analyte2: #007300; --film: #8f6012; --streak: #4d6d8f;
+    /* Project tokens at 4.5:1 or better: green 5.3:1 on the mobile phase and
+       4.6:1 on the lighter film, particle outline 4.7:1. Streaks stay faint. */
+    --analyte2: #007300; --film: #f3dfb0; --film-edge: #8a6420;
   }
 }
 
@@ -575,7 +581,7 @@ html[data-present] .present-hint { display: block; margin: 12px 0 0; color: var(
     --text-secondary: #d6d5cb; --text-muted: #b3b1a7; --axis: #8a8880; --grid: #3a3a37;
     --series-a: #22b07f; --series-b: #e8672f; --series-c: #4a93ec; --series-d: #a89ff0;
     --critical-text: #f28b85; --success-text: #3dbb3d;
-    --analyte2: #2aa52a; --film: #d9a23a; --streak: #6a8db3;   /* 5.1:1, 7.1:1, 4.7:1 */
+    --analyte2: #35ad35; --film: #382a14; --film-edge: #b08634;   /* molecules >= 4.7:1 on the film, outline 4.9:1 */
   }
 }
 @media (min-width: 900px) {
@@ -583,6 +589,6 @@ html[data-present] .present-hint { display: block; margin: 12px 0 0; color: var(
     --text-secondary: #d6d5cb; --text-muted: #b3b1a7; --axis: #8a8880; --grid: #3a3a37;
     --series-a: #22b07f; --series-b: #e8672f; --series-c: #4a93ec; --series-d: #a89ff0;
     --critical-text: #f28b85; --success-text: #3dbb3d;
-    --analyte2: #2aa52a; --film: #d9a23a; --streak: #6a8db3;
+    --analyte2: #35ad35; --film: #382a14; --film-edge: #b08634;
   }
 }

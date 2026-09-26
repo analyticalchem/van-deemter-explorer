@@ -61,9 +61,9 @@
       particle: cssVar('--particle'),
       particleHi: cssVar('--particle-hi'),
       film: cssVar('--film'),
+      filmEdge: cssVar('--film-edge'),
       wall: cssVar('--wall'),
       frit: cssVar('--frit'),
-      edge: cssVar('--molecule-edge'),
       text: cssVar('--text-secondary'),
       font: parseFloat(cssVar('--chart-font')) || 12
     };
@@ -387,12 +387,16 @@
     g.fillStyle = C.mobile;
     g.fillRect(x0, y0, x1 - x0, y1 - y0);
 
-    // Packing: support particle with a stationary liquid film.
+    // Packing: support particle with a stationary liquid film. A thin amber
+    // --film-edge outline gives each particle a boundary at 3:1 or better
+    // against the mobile phase without competing with the molecules.
     g.save();
     g.beginPath();
     g.rect(x0, y0, x1 - x0, y1 - y0);
     g.clip();
     var r = this.r, Rf = r + this.film, sx = this.sx;
+    g.strokeStyle = C.filmEdge;
+    g.lineWidth = 1;
     for (var j = 0; j < this.nRows; j++) {
       var cy = this.rowY0 + j * this.sy, off = this.rowOffset(j);
       for (var cx = x0 + sx * 0.5 + off - sx; cx < x1 + sx; cx += sx) {
@@ -407,6 +411,9 @@
         g.beginPath();
         g.arc(cx, cy, r, 0, Math.PI * 2);
         g.fill();
+        g.beginPath();
+        g.arc(cx, cy, Rf - 0.5, 0, Math.PI * 2);
+        g.stroke();
       }
     }
     g.restore();
@@ -446,13 +453,6 @@
       g.beginPath();
       g.arc(m, m, R, 0, Math.PI * 2);
       g.fill();
-      // Edge ring: keeps a molecule at 3:1 or better where it sits on the film.
-      var lw = Math.max(1, dpr);
-      g.strokeStyle = this.colors.edge;
-      g.lineWidth = lw;
-      g.beginPath();
-      g.arc(m, m, R - lw / 2, 0, Math.PI * 2);
-      g.stroke();
     }
     this.spriteSize = size / dpr;
   };

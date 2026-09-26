@@ -6,6 +6,10 @@
  *                      band per visible analyte.
  *   VanDeemterPlot   — H versus linear velocity u with the A, B/u and C·u terms.
  *                      Analyte 1 is drawn solid, analyte 2 dashed.
+ *
+ * Colours and sizes (fonts, line widths, markers, halo) come from the CSS
+ * tokens and are re-read in refreshTheme(), so presentation mode can enlarge
+ * them without any change here.
  */
 (function (root) {
   'use strict';
@@ -14,6 +18,7 @@
   var SQRT2PI = Math.sqrt(2 * Math.PI);
   var DASH = [7, 5];
   var SUB = ['₁', '₂'];
+  var NB = ' ';   // non-breaking space before units
 
   function cssVar(name) {
     return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -31,7 +36,13 @@
       B: cssVar('--series-b'),
       C: cssVar('--series-c'),
       warning: cssVar('--status-warning'),
-      critical: cssVar('--status-critical')
+      critical: cssVar('--status-critical'),
+      fontSmall: parseFloat(cssVar('--chart-font-small')) || 11,
+      font: parseFloat(cssVar('--chart-font')) || 12,
+      line: parseFloat(cssVar('--chart-line')) || 2,
+      lineTotal: parseFloat(cssVar('--chart-line-total')) || 2.5,
+      marker: parseFloat(cssVar('--chart-marker')) || 5,
+      halo: parseFloat(cssVar('--chart-halo')) || 4
     };
   }
 
@@ -62,11 +73,11 @@
     return v.toLocaleString(undefined, { minimumFractionDigits: d, maximumFractionDigits: d });
   }
 
-  /** Text with a surface-colored halo so it stays legible over curves. */
-  function haloText(g, text, x, y, surface) {
+  /** Text with a surface-coloured halo so it stays legible over curves. */
+  function haloText(g, text, x, y, C) {
     g.save();
-    g.strokeStyle = surface;
-    g.lineWidth = 4;
+    g.strokeStyle = C.surface;
+    g.lineWidth = C.halo;
     g.lineJoin = 'round';
     g.strokeText(text, x, y);
     g.restore();
@@ -106,8 +117,6 @@
     this.H = s.H;
     this.x0 = this.padL;
     this.x1 = s.W - this.padR;
-    this.top = 16;
-    this.bottom = s.H - 24;
     this.nb = Math.max(30, Math.min(120, Math.round((this.x1 - this.x0) / 9)));
     var nb = this.nb;
     this.species.forEach(function (sp) { sp.counts = new Uint16Array(nb); });
@@ -121,7 +130,9 @@
   BandPlot.prototype.draw = function () {
     if (!this.g) return;
     var g = this.g, C = this.colors, L = this.L, self = this;
-    var x0 = this.x0, x1 = this.x1, top = this.top, bot = this.bottom;
+    var s = C.font / 12;
+    var x0 = this.x0, x1 = this.x1;
+    var top = Math.round(C.font + 4), bot = this.H - Math.round(C.fontSmall + 13);
     var nb = this.nb, binW = L / nb, i;
     var shown = this.species.filter(function (sp) { return sp.visible; });
 
@@ -157,18 +168,18 @@
     g.lineTo(x1, bot + 0.5);
     g.stroke();
     g.fillStyle = C.muted;
-    g.font = '11px ' + FONT;
+    g.font = C.fontSmall + 'px ' + FONT;
     g.textAlign = 'center';
     g.textBaseline = 'top';
-    var mm = L * 1000, step = niceStep(mm, (x1 - x0) / 90);
+    var mm = L * 1000, step = niceStep(mm, (x1 - x0) / (90 * s));
     for (var v = 0; v <= mm + 1e-9; v += step) {
       var tx = x0 + v / 1000 * kx;
       g.beginPath();
       g.moveTo(tx + 0.5, bot);
-      g.lineTo(tx + 0.5, bot + 4);
+      g.lineTo(tx + 0.5, bot + 4 * s);
       g.stroke();
       var last = v + step > mm + 1e-9;
-      g.fillText(v === 0 ? '0' : fmt(v, 0) + (last ? ' mm' : ''), tx, bot + 6);
+      g.fillText(v === 0 ? '0' : fmt(v, 0) + (last ? NB + 'mm' : ''), tx, bot + 6 * s);
     }
 
     g.save();
@@ -176,31 +187,44 @@
     g.rect(x0, 0, x1 - x0, bot);
     g.clip();
 
-    // Histograms of simulated molecules.
+    // Histograms of simulated molecules: a light fill plus a full-colour top
+    // edge, so each bar's height reads at 3:1 or better against the surface.
     var bw = (x1 - x0) / nb, gap = bw > 6 ? 2 : 1;
     shown.forEach(function (sp) {
       g.fillStyle = withAlpha(sp.color, 0.28);
+      g.beginPath();
       for (i = 0; i < nb; i++) {
         if (!sp.counts[i]) continue;
         var h = Math.min(sp.counts[i] * ky, bot - top + 12);
-        g.fillRect(x0 + i * bw + gap / 2, bot - h, bw - gap, h);
+        g.rect(x0 + i * bw + gap / 2, bot - h, bw - gap, h);
       }
+      g.fill();
+      g.strokeStyle = sp.color;
+      g.lineWidth = Math.max(1.5, C.line * 0.75);
+      g.beginPath();
+      for (i = 0; i < nb; i++) {
+        if (!sp.counts[i]) continue;
+        var ht = Math.min(sp.counts[i] * ky, bot - top + 12);
+        g.moveTo(x0 + i * bw + gap / 2, bot - ht);
+        g.lineTo(x0 + (i + 1) * bw - gap / 2, bot - ht);
+      }
+      g.stroke();
     });
 
     // Predicted Gaussians: σ² = σ0² + H·x.
-    function curve(sp, s) {
+    function curve(sp, sd) {
       g.beginPath();
       for (var px = x0; px <= x1; px += 1.5) {
-        var xm = (px - x0) / kx, z = (xm - sp.mu) / s;
-        var y = bot - Math.min(sp.amp / s * Math.exp(-0.5 * z * z) * ky, bot + 20);
+        var xm = (px - x0) / kx, z = (xm - sp.mu) / sd;
+        var y = bot - Math.min(sp.amp / sd * Math.exp(-0.5 * z * z) * ky, bot + 20);
         if (px === x0) g.moveTo(px, y); else g.lineTo(px, y);
       }
     }
 
     if (this.showGhost) {
       g.strokeStyle = C.text2;
-      g.lineWidth = 1.5;
-      g.setLineDash([5, 4]);
+      g.lineWidth = C.line * 0.75;
+      g.setLineDash([5 * s, 4 * s]);
       shown.forEach(function (sp) {
         if (!(sp.sdG > 0) || Math.abs(sp.sdG - sp.sd) / sp.sd <= 0.01) return;
         curve(sp, sp.sdG);
@@ -218,7 +242,7 @@
       g.fill();
       curve(sp, sp.sd);
       g.strokeStyle = sp.color;
-      g.lineWidth = 2;
+      g.lineWidth = C.line;
       g.lineJoin = 'round';
       g.stroke();
     });
@@ -226,8 +250,8 @@
 
     // Peak-width bracket on each band: 4σ, spanning μ ± 2σ at the height where
     // the Gaussian is e⁻² (13.5%) of its peak, labelled with the real-column value.
-    var placed = [];
-    g.font = '12px ' + FONT;
+    var placed = [], tick = 4 * s, lift = C.font + 3;
+    g.font = C.font + 'px ' + FONT;
     shown.forEach(function (sp) {
       var mu = sp.mu, sd = sp.sd, amp = sp.amp;
       var peakY = bot - Math.min(amp / sd * ky, bot - top);
@@ -235,25 +259,25 @@
       var xl = x0 + (mu - 2 * sd) * kx, xr = x0 + (mu + 2 * sd) * kx;
       if (!(xr > x0 && xl < x1)) return;
       g.strokeStyle = C.text;
-      g.lineWidth = 1;
+      g.lineWidth = Math.max(1, C.line / 2);
       g.beginPath();
-      g.moveTo(xl, yb - 4); g.lineTo(xl, yb + 4);
+      g.moveTo(xl, yb - tick); g.lineTo(xl, yb + tick);
       g.moveTo(xl, yb); g.lineTo(xr, yb);
-      g.moveTo(xr, yb - 4); g.lineTo(xr, yb + 4);
+      g.moveTo(xr, yb - tick); g.lineTo(xr, yb + tick);
       g.stroke();
-      var label = '4σ = ' + fmt(4 * sd / self.mag * 1000, 2) + ' mm';
+      var label = '4σ = ' + fmt(4 * sd / self.mag * 1000, 2) + NB + 'mm';
       var tw = g.measureText(label).width;
       var lx = Math.max(x0 + tw / 2, Math.min(x1 - tw / 2, (xl + xr) / 2));
-      var ly = Math.max(top + 12, peakY - 4);
+      var ly = Math.max(top + C.font, peakY - 4);
       // Lift a label that would sit on top of the other band's label.
       placed.forEach(function (p) {
-        if (Math.abs(p.x - lx) < (p.w + tw) / 2 + 6 && Math.abs(p.y - ly) < 15) ly = Math.max(top + 12, p.y - 15);
+        if (Math.abs(p.x - lx) < (p.w + tw) / 2 + 6 && Math.abs(p.y - ly) < lift) ly = Math.max(top + C.font, p.y - lift);
       });
       placed.push({ x: lx, y: ly, w: tw });
       g.fillStyle = C.text;
       g.textBaseline = 'bottom';
       g.textAlign = 'center';
-      haloText(g, label, lx, ly, C.surface);
+      haloText(g, label, lx, ly, C);
     });
   };
 
@@ -268,6 +292,7 @@
     this.data = null;
     this.hoverU = null;
     this.colors = readChrome();
+    this.m = { l: 50, r: 46, t: 34, b: 42 };
     var self = this;
     canvas.addEventListener('pointermove', function (e) { self.pointer(e, false); });
     canvas.addEventListener('pointerdown', function (e) {
@@ -281,9 +306,7 @@
     });
     canvas.addEventListener('pointerleave', function () {
       if (self.dragging) return;
-      self.hoverU = null;
-      self.tooltip.hidden = true;
-      self.draw();
+      self.hideTooltip();
     });
   }
 
@@ -306,8 +329,17 @@
     this.g = s.g;
     this.W = s.W;
     this.H = s.H;
-    var narrow = s.W < 420;
-    this.m = { l: 50, r: narrow ? 36 : 46, t: 34, b: 42 };
+    this.draw();
+  };
+
+  /** Escape (handled in main.js) closes the tooltip before anything else. */
+  VanDeemterPlot.prototype.tooltipOpen = function () {
+    return !this.tooltip.hidden;
+  };
+
+  VanDeemterPlot.prototype.hideTooltip = function () {
+    this.hoverU = null;
+    this.tooltip.hidden = true;
     this.draw();
   };
 
@@ -329,9 +361,7 @@
     var x = e.clientX - rect.left, y = e.clientY - rect.top;
     var inside = x >= this.m.l && x <= this.W - this.m.r && y >= this.m.t - 10 && y <= this.H - this.m.b + 10;
     if (!inside && !this.dragging) {
-      this.hoverU = null;
-      this.tooltip.hidden = true;
-      this.draw();
+      this.hideTooltip();
       return;
     }
     var VD = root.VD, P = VD.params;
@@ -354,6 +384,7 @@
       if (color) {
         var key = document.createElement('span');
         key.className = dashed ? 'tip-key dashed' : 'tip-key';
+        key.setAttribute('aria-hidden', 'true');
         key.style.setProperty('--key', color);
         r.appendChild(key);
       }
@@ -365,10 +396,10 @@
       r.appendChild(n);
       tip.appendChild(r);
     }
-    function um(h) { return fmt(h * 1e6, 2) + ' µm'; }
+    function um(h) { return fmt(h * 1e6, 2) + NB + 'µm'; }
     var head = document.createElement('div');
     head.className = 'tip-head';
-    head.textContent = 'u = ' + fmt(u * 1000, 2) + ' mm/s · ' + fmt(VD.flowFromVelocity(u), 2) + ' mL/min';
+    head.textContent = 'u = ' + fmt(u * 1000, 2) + NB + 'mm/s · ' + fmt(VD.flowFromVelocity(u), 2) + NB + 'mL/min';
     tip.appendChild(head);
     d.analytes.forEach(function (a, i) {
       row(um(hps[i].H), (two ? 'H' + SUB[a.id] : 'H') + ' (analyte ' + (a.id + 1) + ')', C.text, a.id === 1);
@@ -378,10 +409,10 @@
     if (terms.C) {
       d.analytes.forEach(function (a, i) { row(um(hps[i].C), two ? 'C·u' + SUB[a.id] : 'C·u', C.C, a.id === 1); });
     }
-    row(fmt(VD.pressure(u, d.analytes[0].co) / 1e5, 0) + ' bar', 'back-pressure', null);
+    row(fmt(VD.pressure(u, d.analytes[0].co) / 1e5, 0) + NB + 'bar', 'back-pressure', null);
     var hint = document.createElement('div');
     hint.className = 'tip-hint';
-    hint.textContent = 'Click or drag to set this flow rate';
+    hint.textContent = 'Click or drag to set this flow rate · Esc closes';
     tip.appendChild(hint);
     tip.hidden = false;
     var tw = tip.offsetWidth, th = tip.offsetHeight;
@@ -395,9 +426,15 @@
   VanDeemterPlot.prototype.draw = function () {
     var d = this.data, g = this.g;
     if (!d || !g) return;
-    var VD = root.VD, P = VD.params, C = this.colors, m = this.m;
-    var W = this.W, H = this.H;
+    var VD = root.VD, P = VD.params, C = this.colors;
+    var W = this.W, H = this.H, s = C.font / 12;
+    // Margins grow with the chart font so labels still fit when presenting.
+    var m = this.m = {
+      l: Math.round(50 * s), r: Math.round((W < 420 ? 36 : 46) * s),
+      t: Math.round(34 * s), b: Math.round(42 * s)
+    };
     var left = m.l, right = W - m.r, top = m.t, bot = H - m.b;
+    var tick = 4 * s;
     g.clearRect(0, 0, W, H);
 
     var uHi = VD.velocityFromFlow(P.Fmax);
@@ -418,7 +455,8 @@
     function Y(h) { return self.hToY(h); }
     function sub(i) { return two ? SUB[i] : ''; }
 
-    g.font = '11px ' + FONT;
+    var fontSmall = C.fontSmall + 'px ' + FONT, font = C.font + 'px ' + FONT;
+    g.font = fontSmall;
 
     // Pressure limits as status washes behind the data.
     var u400 = P.HPLC_LIMIT * co0.dp * co0.dp / (P.phi * co0.eta * P.L);
@@ -430,21 +468,23 @@
       g.fillRect(xa, top, xb - xa, bot - top);
       g.fillStyle = withAlpha(color, 0.9);
       g.fillRect(xa, top, xb - xa, 3);
-      if (xb - xa > 64) {
+      g.font = fontSmall;
+      if (xb - xa > g.measureText(label).width + 10) {
         g.fillStyle = C.text2;
         g.textAlign = 'left';
         g.textBaseline = 'top';
         g.fillText(label, xa + 5, top + 7);
       }
     }
-    wash(u400, u1300, C.warning, '▲ > 400 bar');
-    wash(u1300, Infinity, C.critical, '✕ > 1300 bar');
+    wash(u400, u1300, C.warning, '▲ > 400' + NB + 'bar');
+    wash(u1300, Infinity, C.critical, '✕ > 1300' + NB + 'bar');
 
     // Grid and axes.
     var hStep = niceStep(this.hMax * 1e6, 5);
     g.strokeStyle = C.grid;
     g.lineWidth = 1;
     g.fillStyle = C.muted;
+    g.font = fontSmall;
     g.textAlign = 'right';
     g.textBaseline = 'middle';
     for (var hv = 0; hv <= this.hMax * 1e6 + 1e-9; hv += hStep) {
@@ -455,7 +495,7 @@
         g.lineTo(right, gy);
         g.stroke();
       }
-      g.fillText(fmt(hv, hStep < 1 ? 1 : 0), left - 6, gy);
+      g.fillText(fmt(hv, hStep < 1 ? 1 : 0), left - 6 * s, gy);
     }
     g.strokeStyle = C.axis;
     g.beginPath();
@@ -473,21 +513,21 @@
       g.strokeStyle = C.axis;
       g.beginPath();
       g.moveTo(ux, bot);
-      g.lineTo(ux, bot + 4);
+      g.lineTo(ux, bot + tick);
       g.stroke();
-      g.fillText(fmt(uv, 0), ux, bot + 6);
+      g.fillText(fmt(uv, 0), ux, bot + 6 * s);
     }
     g.textBaseline = 'bottom';
     for (var fv = 0; fv <= P.Fmax + 1e-9; fv += 1) {
       var fx = Math.round(X(VD.velocityFromFlow(fv))) + 0.5;
       g.beginPath();
       g.moveTo(fx, top);
-      g.lineTo(fx, top - 4);
+      g.lineTo(fx, top - tick);
       g.stroke();
-      g.fillText(fmt(fv, 0), fx, top - 5);
+      g.fillText(fmt(fv, 0), fx, top - 5 * s);
     }
     g.fillStyle = C.text2;
-    g.font = '12px ' + FONT;
+    g.font = font;
     g.textAlign = 'center';
     g.textBaseline = 'bottom';
     g.fillText('Linear velocity u (mm/s)', (left + right) / 2, H - 2);
@@ -495,7 +535,7 @@
     g.textBaseline = 'top';
     g.fillText('Flow rate (mL/min)', left, 0);
     g.save();
-    g.translate(12, (top + bot) / 2);
+    g.translate(C.font, (top + bot) / 2);
     g.rotate(-Math.PI / 2);
     g.textAlign = 'center';
     g.textBaseline = 'middle';
@@ -510,27 +550,27 @@
     var N = 240, uStart = this.uMax / 400;
     function plot(fn, color, width, dashed) {
       g.beginPath();
-      for (var s = 0; s <= N; s++) {
-        var u = uStart + (self.uMax - uStart) * s / N;
+      for (var k = 0; k <= N; k++) {
+        var u = uStart + (self.uMax - uStart) * k / N;
         var y = Y(Math.min(fn(u), self.hMax * 3));
-        if (s === 0) g.moveTo(X(u), y); else g.lineTo(X(u), y);
+        if (k === 0) g.moveTo(X(u), y); else g.lineTo(X(u), y);
       }
       g.strokeStyle = color;
       g.lineWidth = width;
       g.lineJoin = 'round';
       g.lineCap = dashed ? 'butt' : 'round';
-      g.setLineDash(dashed ? DASH : []);
+      g.setLineDash(dashed ? DASH.map(function (v) { return v * s; }) : []);
       g.stroke();
       g.setLineDash([]);
     }
     // A and B/u are the same for both analytes (same particles, same Dm).
-    if (terms.A) plot(function () { return co0.A; }, C.A, 2);
-    if (terms.B) plot(function (u) { return co0.B / u; }, C.B, 2);
+    if (terms.A) plot(function () { return co0.A; }, C.A, C.line);
+    if (terms.B) plot(function (u) { return co0.B / u; }, C.B, C.line);
     analytes.forEach(function (a) {
-      if (terms.C) plot(function (u) { return a.co.C * u; }, C.C, 2, a.id === 1);
+      if (terms.C) plot(function (u) { return a.co.C * u; }, C.C, C.line, a.id === 1);
     });
     analytes.forEach(function (a) {
-      plot(function (u) { return VD.plateHeight(u, a.co, terms).H; }, C.text, 2.5, a.id === 1);
+      plot(function (u) { return VD.plateHeight(u, a.co, terms).H; }, C.text, C.lineTotal, a.id === 1);
     });
 
     // Hover crosshair.
@@ -549,10 +589,10 @@
     function endLabel(name, fn, inv, prio) {
       var hEnd = fn(self.uMax);
       if (hEnd <= self.hMax) {
-        labels.push({ text: name, x: right + 6, y: Y(hEnd), align: 'left', prio: prio });
+        labels.push({ text: name, x: right + 6 * s, y: Y(hEnd), align: 'left', prio: prio });
       } else if (inv) {
-        var ux = inv(self.hMax);
-        if (ux > 0 && ux < self.uMax) labels.push({ text: name, x: X(ux) - 6, y: top + 10, align: 'right', prio: prio });
+        var ux2 = inv(self.hMax);
+        if (ux2 > 0 && ux2 < self.uMax) labels.push({ text: name, x: X(ux2) - 6 * s, y: top + C.font, align: 'right', prio: prio });
       }
     }
     if (terms.A) endLabel('A', function () { return co0.A; }, null, 1);
@@ -568,103 +608,105 @@
       }, 5 - i * 0.5);
     });
     labels.sort(function (p, q) { return q.prio - p.prio; });
-    var placed = [];
-    g.font = '12px ' + FONT;
+    var placed = [], clashY = C.font + 1, clashX = 40 * s;
+    g.font = font;
     g.fillStyle = C.text2;
     g.textBaseline = 'middle';
     labels.forEach(function (lb) {
-      var clash = placed.some(function (p) { return Math.abs(p.y - lb.y) < 13 && Math.abs(p.x - lb.x) < 40; });
+      var clash = placed.some(function (p) { return Math.abs(p.y - lb.y) < clashY && Math.abs(p.x - lb.x) < clashX; });
       if (clash) return;
       placed.push(lb);
       g.textAlign = lb.align;
-      haloText(g, lb.text, lb.x, lb.y, C.surface);
+      haloText(g, lb.text, lb.x, lb.y, C);
     });
 
     // Marker shapes: analyte 1 a circle, analyte 2 a diamond (hollow at the
     // optimum, solid at the current flow), matching solid vs dashed curves.
-    function markerPath(id, x, y, r) {
+    var r = C.marker, gapR = r + 2, labelGap = r + 4;
+    function markerPath(id, x, y, rad) {
       g.beginPath();
       if (id === 1) {
-        var s = r * 1.25;
-        g.moveTo(x, y - s);
-        g.lineTo(x + s, y);
-        g.lineTo(x, y + s);
-        g.lineTo(x - s, y);
+        var sd = rad * 1.25;
+        g.moveTo(x, y - sd);
+        g.lineTo(x + sd, y);
+        g.lineTo(x, y + sd);
+        g.lineTo(x - sd, y);
         g.closePath();
       } else {
-        g.arc(x, y, r, 0, Math.PI * 2);
+        g.arc(x, y, rad, 0, Math.PI * 2);
       }
     }
 
     // Optimum markers.
     var optLabels = [];
+    g.font = font;
     analytes.forEach(function (a) {
       var opt = a.opt;
       if (opt.u === null) return;
       var ox = X(opt.u), oy = Y(opt.H);
       if (oy < top || oy > bot) return;
-      markerPath(a.id, ox, oy, 5);
+      markerPath(a.id, ox, oy, r);
       g.fillStyle = C.surface;
       g.fill();
       g.strokeStyle = C.text;
-      g.lineWidth = 2;
+      g.lineWidth = C.line;
       g.lineJoin = 'miter';
       g.stroke();
       var text = opt.interior ? 'u_opt' + sub(a.id) : 'best in range' + sub(a.id);
       // Put the second label above its marker if it would collide with the first.
-      var above = optLabels.some(function (p) { return Math.abs(p.x - ox) < 48 && Math.abs(p.y - oy) < 24; });
+      var above = optLabels.some(function (p) { return Math.abs(p.x - ox) < 48 * s && Math.abs(p.y - oy) < 2 * C.font; });
       optLabels.push({ x: ox, y: oy });
       g.fillStyle = C.text2;
       g.textAlign = 'center';
       g.textBaseline = above ? 'bottom' : 'top';
-      haloText(g, text, ox, above ? oy - 9 : oy + 9, C.surface);
+      haloText(g, text, ox, above ? oy - labelGap : oy + labelGap, C);
     });
 
     // Current operating point on each curve (an arrow at the top edge if off the scale).
     var cx = X(d.u);
     var pts = hNow.map(function (h, i) {
       var cy = Y(h), off = cy < top;
-      return { i: i, id: analytes[i].id, h: h, cy: off ? top + 8 + i * 14 : cy, off: off };
+      return { i: i, id: analytes[i].id, h: h, cy: off ? top + gapR + i * (C.font + 2) : cy, off: off };
     });
     var lowest = Math.max.apply(null, pts.map(function (p) { return p.cy; }));
     g.strokeStyle = C.text2;
     g.lineWidth = 1;
     g.beginPath();
-    g.moveTo(Math.round(cx) + 0.5, Math.min(bot, lowest + 7));
+    g.moveTo(Math.round(cx) + 0.5, Math.min(bot, lowest + gapR));
     g.lineTo(Math.round(cx) + 0.5, bot);
     g.stroke();
     var higher = two ? (pts[0].cy <= pts[1].cy ? 0 : 1) : 0;
     pts.forEach(function (p) {
       g.fillStyle = C.surface;
       g.beginPath();
-      g.arc(cx, p.cy, 7, 0, Math.PI * 2);
+      g.arc(cx, p.cy, gapR, 0, Math.PI * 2);
       g.fill();
       g.fillStyle = C.text;
       if (p.off) {
         g.beginPath();
-        g.moveTo(cx, p.cy - 6);
-        g.lineTo(cx + 5.5, p.cy + 4);
-        g.lineTo(cx - 5.5, p.cy + 4);
+        g.moveTo(cx, p.cy - r * 1.2);
+        g.lineTo(cx + r * 1.1, p.cy + r * 0.8);
+        g.lineTo(cx - r * 1.1, p.cy + r * 0.8);
         g.closePath();
       } else {
-        markerPath(p.id, cx, p.cy, 5);
+        markerPath(p.id, cx, p.cy, r);
       }
       g.fill();
     });
-    g.font = '600 12px ' + FONT;
+    g.font = '600 ' + font;
     pts.forEach(function (p) {
-      var tx = 'H' + sub(p.id) + ' = ' + fmt(p.h * 1e6, 1) + ' µm' + (p.off ? ' (off scale)' : '');
+      var tx = 'H' + sub(p.id) + ' = ' + fmt(p.h * 1e6, 1) + NB + 'µm' + (p.off ? ' (off scale)' : '');
       var tw = g.measureText(tx).width;
-      var lx = cx + 12, align = 'left';
-      if (lx + tw > right - 4) { lx = cx - 12; align = 'right'; }
+      var lx = cx + labelGap + 3, align = 'left';
+      if (lx + tw > right - 4) { lx = cx - labelGap - 3; align = 'right'; }
       g.textAlign = align;
       g.fillStyle = C.text;
       var ly, base;
       if (p.off) { ly = p.cy; base = 'middle'; }
-      else if (!two || p.i === higher) { ly = p.cy - 6; base = 'bottom'; }
-      else { ly = p.cy + 6; base = 'top'; }
+      else if (!two || p.i === higher) { ly = p.cy - r - 1; base = 'bottom'; }
+      else { ly = p.cy + r + 1; base = 'top'; }
       g.textBaseline = base;
-      haloText(g, tx, lx, ly, C.surface);
+      haloText(g, tx, lx, ly, C);
     });
   };
 

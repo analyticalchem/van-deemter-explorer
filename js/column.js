@@ -63,7 +63,9 @@
       film: cssVar('--film'),
       wall: cssVar('--wall'),
       frit: cssVar('--frit'),
-      text: cssVar('--text-secondary')
+      edge: cssVar('--molecule-edge'),
+      text: cssVar('--text-secondary'),
+      font: parseFloat(cssVar('--chart-font')) || 12
     };
   };
 
@@ -87,7 +89,7 @@
     this.canvas.height = Math.round(H * dpr);
     this.x0 = this.padL;
     this.x1 = W - this.padR;
-    this.y0 = 22;
+    this.y0 = Math.round(this.colors.font + 10);   // room for the end labels
     this.y1 = H - 10;
     this.build();
   };
@@ -419,7 +421,7 @@
 
     // End labels.
     g.fillStyle = C.text;
-    g.font = '12px system-ui, -apple-system, "Segoe UI", sans-serif';
+    g.font = C.font + 'px system-ui, -apple-system, "Segoe UI", sans-serif';
     g.textBaseline = 'bottom';
     g.textAlign = 'left';
     g.fillText('Inlet', 4, y0 - 6);
@@ -444,13 +446,21 @@
       g.beginPath();
       g.arc(m, m, R, 0, Math.PI * 2);
       g.fill();
+      // Edge ring: keeps a molecule at 3:1 or better where it sits on the film.
+      var lw = Math.max(1, dpr);
+      g.strokeStyle = this.colors.edge;
+      g.lineWidth = lw;
+      g.beginPath();
+      g.arc(m, m, R - lw / 2, 0, Math.PI * 2);
+      g.stroke();
     }
     this.spriteSize = size / dpr;
   };
 
+  /** Re-read colours and sizes, then rebuild (the label font sets the tube's top). */
   ColumnView.prototype.refreshTheme = function () {
     this.readColors();
-    if (this.W) { this.buildStatic(); this.buildSprites(); }
+    if (this.W) this.resize();
   };
 
   ColumnView.prototype.draw = function () {

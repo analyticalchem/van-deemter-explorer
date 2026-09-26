@@ -16,6 +16,8 @@
   var INJECT_FRACTION = 0.018;  // injected plug width as a fraction of the column (at ×9)
   var K_MIN = 0.3, K_MAX = 10;  // retention-factor range of the SP-affinity sliders
   var SUB = ['₁', '₂'];
+  var NB = ' ';            // non-breaking space before units
+  var THEME_KEY = 'van-deemter-explorer-theme';
 
   function $(id) { return document.getElementById(id); }
 
@@ -26,6 +28,8 @@
     inject: $('inject'), pause: $('pause'), speed: $('speed'),
     ghost: $('ghost'), trueScale: $('truescale'), auto: $('auto'), autoY: $('autoy'),
     scaleNote: $('scale-note'), live: $('live'), theme: $('theme'),
+    present: $('present'), presentStatus: $('present-status'),
+    pressureStatus: $('p-status'),
     table: $('vd-table'), lgGhost: $('lg-ghost')
   };
 
@@ -126,7 +130,7 @@
 
   function minutes(s) {
     var m = s / 60;
-    return m < 10 ? fmt(m, 1) + ' min' : fmt(m, 0) + ' min';
+    return (m < 10 ? fmt(m, 1) : fmt(m, 0)) + NB + 'min';
   }
 
   /** Values of one quantity for the analytes shown, joined for a shared caption. */
@@ -146,10 +150,10 @@
   function updateControls() {
     var inp = cur.inp;
     var cOff = state.terms.C ? '' : ' · C·u off, so exchange between phases is instantaneous';
-    els.flowOut.textContent = fmt(inp.F, 2) + ' mL/min';
-    els.flowSub.textContent = 'Linear velocity u = ' + fmt(cur.u * 1000, 2) + ' mm/s';
-    els.tempOut.textContent = inp.Tc + ' °C';
-    els.dpOut.textContent = fmt(inp.dpUm, 1) + ' µm';
+    els.flowOut.textContent = fmt(inp.F, 2) + NB + 'mL/min';
+    els.flowSub.textContent = 'Linear velocity u = ' + fmt(cur.u * 1000, 2) + NB + 'mm/s';
+    els.tempOut.textContent = inp.Tc + NB + '°C';
+    els.dpOut.textContent = fmt(inp.dpUm, 1) + NB + 'µm';
     var onCount = active().length;
     analytes.forEach(function (a) {
       var n = a.id + 1;
@@ -174,14 +178,14 @@
 
     analytes.forEach(function (a) {
       var s = a.suffix, hp = a.hp;
-      setText('r-H' + s, um(hp.H) + ' µm');
+      setText('r-H' + s, um(hp.H) + NB + 'µm');
       setText('r-A' + s, state.terms.A ? um(hp.A) : 'off');
       setText('r-B' + s, state.terms.B ? um(hp.B) : 'off');
       setText('r-C' + s, state.terms.C ? um(hp.C) : 'off');
       setText('r-N' + s, plates(hp.H));
-      setText('r-uopt' + s, a.opt.u !== null ? fmt(a.opt.u * 1000, 2) + ' mm/s' : 'any');
+      setText('r-uopt' + s, a.opt.u !== null ? fmt(a.opt.u * 1000, 2) + NB + 'mm/s' : 'any');
       setText('r-tR' + s, minutes(VD.times(u, a.k).tR));
-      setText('r-sigma' + s, fmt(4 * Math.sqrt(hp.H * P.L) * 1000, 2) + ' mm');
+      setText('r-sigma' + s, fmt(4 * Math.sqrt(hp.H * P.L) * 1000, 2) + NB + 'mm');
     });
 
     if (list[0].opt.u === null) {
@@ -189,7 +193,7 @@
     } else {
       var edge = list.some(function (a) { return !a.opt.interior; }) ? ' (edge of range)' : '';
       setText('r-uopt-sub', both(function (a) { return fmt(VD.flowFromVelocity(a.opt.u), 2); }, ' / ') +
-        ' mL/min · H_min ' + both(function (a) { return um(a.opt.H); }, ' / ') + ' µm' + edge);
+        NB + 'mL/min · H_min ' + both(function (a) { return um(a.opt.H); }, ' / ') + NB + 'µm' + edge);
     }
     setText('r-tR-sub', 't₀ = ' + minutes(VD.times(u, 0).t0) + ' · k = ' + both(function (a) { return kText(a.k); }));
     setText('r-frac-sub', (list.length > 1 ? 'Theory ' : 'Theory k/(1+k) = ') +
@@ -203,20 +207,23 @@
       setText('r-Rs-sub', (analytes[0].k === analytes[1].k ? 'Co-eluting · ' : '') + drawn + ' · baseline at Rs ≥ 1.5');
     }
 
-    setText('r-Dm', fmt(co.Dm * 1e9, 2) + ' × 10⁻⁹ m²/s');
-    setText('r-Dm-sub', 'Viscosity η = ' + fmt(co.eta * 1000, 2) + ' mPa·s');
+    setText('r-Dm', fmt(co.Dm * 1e9, 2) + ' × 10⁻⁹' + NB + 'm²/s');
+    setText('r-Dm-sub', 'Viscosity η = ' + fmt(co.eta * 1000, 2) + NB + 'mPa·s');
 
     var dP = VD.pressure(u, co), bar = dP / 1e5;
-    setText('r-P', fmt(bar, 0) + ' bar');
-    setText('r-Ppsi', fmt(bar * 14.5038, 0) + ' psi');
-    var fill = $('p-fill'), status = $('p-status');
+    setText('r-P', fmt(bar, 0) + NB + 'bar');
+    setText('r-Ppsi', fmt(bar * 14.5038, 0) + NB + 'psi');
+    var fill = $('p-fill'), status = els.pressureStatus;
     fill.style.width = Math.min(100, bar / 1500 * 100) + '%';
     var level = dP > P.UHPLC_LIMIT ? 'critical' : (dP > P.HPLC_LIMIT ? 'warning' : 'ok');
     fill.dataset.level = level;
-    status.dataset.level = level;
-    status.textContent = level === 'ok' ? '✓ Within a standard HPLC pump’s range (≤ 400 bar)'
-      : level === 'warning' ? '▲ Needs a UHPLC system (> 400 bar)'
-      : '✕ Beyond typical UHPLC limits (> 1300 bar)';
+    // A status region: write only when the verdict changes, not on every slider step.
+    if (status.dataset.level !== level) {
+      status.dataset.level = level;
+      status.textContent = level === 'ok' ? '✓ Within a standard HPLC pump’s range (≤ 400' + NB + 'bar)'
+        : level === 'warning' ? '▲ Needs a UHPLC system (> 400' + NB + 'bar)'
+        : '✕ Beyond typical UHPLC limits (> 1300' + NB + 'bar)';
+    }
   }
 
   function updateLive() {
@@ -227,7 +234,7 @@
     var elapsed = first.sim.t - first.injectTime;
     function where(a) {
       var pos = Math.max(0, a.sim.center);
-      return pos < P.L ? fmt(pos * 1000, 0) + ' mm' : 'the detector';
+      return pos < P.L ? fmt(pos * 1000, 0) + NB + 'mm' : 'the detector';
     }
     var text;
     if (list.length > 1) {
@@ -236,7 +243,7 @@
       var sigmaReal = Math.sqrt(first.sim.variance) / cur.mag;
       text = 'Analyte ' + (first.id + 1) + ' band centre ' +
         (first.sim.center < P.L ? where(first) + ' from the inlet' : 'has reached the detector') +
-        ' · 4σ = ' + fmt(4 * sigmaReal * 1000, 2) + ' mm (real column)';
+        ' · 4σ = ' + fmt(4 * sigmaReal * 1000, 2) + NB + 'mm (real column)';
     }
     els.live.textContent = text + ' · ' + minutes(elapsed) + ' after injection';
   }
@@ -244,6 +251,9 @@
   function updateTable() {
     var t = els.table, terms = state.terms, list = active(), two = list.length > 1;
     t.textContent = '';
+    t.createCaption().textContent = 'Van Deemter curve values at ten flow rates' +
+      (two ? ' for analytes 1 and 2' : ' for analyte ' + (list[0].id + 1));
+    t.caption.className = 'visually-hidden';
     var heads = ['Flow (mL/min)', 'u (mm/s)', 'A (µm)', 'B/u (µm)'];
     list.forEach(function (a) {
       var s = two ? SUB[a.id] : '';
@@ -278,7 +288,7 @@
 
   function updateScaleNote() {
     var secs = TIME_COMPRESSION * state.speed;
-    var time = '1 s on screen = ' + fmt(secs, secs < 10 ? 1 : 0) + ' s in the column';
+    var time = '1' + NB + 's on screen = ' + fmt(secs, secs < 10 ? 1 : 0) + NB + 's in the column';
     els.scaleNote.textContent = state.trueScale
       ? 'Band width at true scale · ' + time
       : 'Band width magnified ×' + MAG + ' so it can be seen · ' + time;
@@ -304,7 +314,7 @@
   }
 
   function frame(now) {
-    var dt = Math.min(0.05, (now - last) / 1000);
+    var dt = Math.min(0.05, (now - last) / 1000);   // clamped so a background tab does not jump
     last = now;
     if (!state.paused) {
       var ts = TIME_COMPRESSION * state.speed;
@@ -336,13 +346,32 @@
     if (name === 'auto') delete document.documentElement.dataset.theme;
     else document.documentElement.dataset.theme = name;
     els.theme.textContent = 'Theme: ' + name;
-    try { localStorage.setItem('vd-theme', name); } catch (e) { /* storage unavailable */ }
+    try { localStorage.setItem(THEME_KEY, name); } catch (e) { /* storage unavailable */ }
     refreshTheme();
   }
+
+  /** Drawing code re-reads colours and --chart-* sizes after a theme or mode change. */
   function refreshTheme() {
     column.refreshTheme();
     band.refreshTheme();
     vdPlot.refreshTheme();
+  }
+
+  // --- presentation mode ----------------------------------------------------------
+
+  function isPresent() { return document.documentElement.hasAttribute('data-present'); }
+
+  function setPresent(on) {
+    document.documentElement.toggleAttribute('data-present', on);
+    els.present.setAttribute('aria-pressed', String(on));
+    els.presentStatus.textContent = on ? 'Presentation mode on. Press Escape to exit.' : 'Presentation mode off.';
+    refreshTheme();    // re-read the --chart-* tokens and the presentation palette
+    layout();          // visuals re-measure their new heights
+    if (on && document.fullscreenEnabled && !document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(function () { /* refused: the mode still applies */ });
+    } else if (!on && document.fullscreenElement && document.exitFullscreen) {
+      document.exitFullscreen().catch(function () { /* already left */ });
+    }
   }
 
   // --- events -----------------------------------------------------------------
@@ -369,7 +398,7 @@
     });
   });
 
-  Array.prototype.forEach.call(document.querySelectorAll('.term'), function (b) {
+  Array.prototype.forEach.call(document.querySelectorAll('.pill[data-term]'), function (b) {
     b.addEventListener('click', function () {
       var t = b.dataset.term;
       state.terms[t] = !state.terms[t];
@@ -380,10 +409,10 @@
 
   els.inject.addEventListener('click', function () { inject(); });
 
+  // An action toggle: the label names the next action; no aria-pressed.
   els.pause.addEventListener('click', function () {
     state.paused = !state.paused;
     els.pause.textContent = state.paused ? 'Play' : 'Pause';
-    els.pause.setAttribute('aria-pressed', String(state.paused));
     last = performance.now();
   });
 
@@ -419,26 +448,46 @@
     applyTheme(themes[(themes.indexOf(curName) + 1) % themes.length]);
   });
 
+  els.present.addEventListener('click', function () { setPresent(!isPresent()); });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.altKey && e.shiftKey && e.code === 'KeyP') {
+      e.preventDefault();
+      setPresent(!isPresent());
+      return;
+    }
+    if (e.key === 'Escape') {
+      // An open tooltip takes the first Escape; the next one leaves presentation mode.
+      if (vdPlot.tooltipOpen()) vdPlot.hideTooltip();
+      else if (isPresent()) setPresent(false);
+    }
+  });
+
+  document.addEventListener('fullscreenchange', function () {
+    if (!document.fullscreenElement && isPresent()) setPresent(false);
+  });
+
   if (window.matchMedia) {
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', refreshTheme);
+    var darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    if (darkQuery.addEventListener) darkQuery.addEventListener('change', refreshTheme);
   }
 
   var resizeQueued = false;
-  new ResizeObserver(function () {
+  function queueLayout() {
     if (resizeQueued) return;
     resizeQueued = true;
     requestAnimationFrame(function () {
       resizeQueued = false;
       layout();
     });
-  }).observe(document.querySelector('main'));
+  }
+  if ('ResizeObserver' in window) new ResizeObserver(queueLayout).observe(document.querySelector('main'));
+  else window.addEventListener('resize', queueLayout);
 
   // --- start ------------------------------------------------------------------
 
-  var saved = 'auto';
-  try { saved = localStorage.getItem('vd-theme') || 'auto'; } catch (e) { /* storage unavailable */ }
-  if (saved !== 'auto') document.documentElement.dataset.theme = saved;
-  els.theme.textContent = 'Theme: ' + saved;
+  // The saved theme was applied by the inline script in <head>; show it on the button.
+  els.theme.textContent = 'Theme: ' + (document.documentElement.dataset.theme || 'auto');
 
   // Browsers may restore the tick boxes on reload.
   analytes.forEach(function (a) { a.on = a.check.checked; });
@@ -450,10 +499,12 @@
   updateLive();
   requestAnimationFrame(frame);
 
-  // Exposed for checking the model from the browser console.
-  window.vdApp = {
+  if (new URLSearchParams(location.search).get('present') === '1') setPresent(true);
+
+  // Debugging handle for console checks.
+  window.app = {
     analytes: analytes, sim: analytes[0].sim, column: column, band: band, plot: vdPlot,
     state: state, current: function () { return cur; }, inject: inject, recompute: recompute,
-    resolution: function () { return resolution(cur.u); }
+    resolution: function () { return resolution(cur.u); }, setPresent: setPresent, isPresent: isPresent
   };
 })();

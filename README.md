@@ -21,12 +21,20 @@ No build step and no dependencies: plain HTML, CSS and JavaScript.
 | **Temperature** (20–80 °C) | Raises the analyte diffusion coefficient D<sub>m</sub> ∝ T/η and lowers the mobile-phase viscosity η. B grows, C shrinks, and u<sub>opt</sub> moves to higher flow. |
 | **Particle size** (1.5–10 µm) | A ∝ d<sub>p</sub> and C ∝ d<sub>p</sub>², so smaller particles give lower, flatter curves. Back-pressure ∝ 1/d<sub>p</sub>². |
 | **Analyte 1 SP Affinity** (tick box plus slider, k = 0.3–10) | The tick box shows or hides analyte 1; either analyte can be switched off, as long as one stays on. The slider sets the analyte's affinity for the stationary phase (SP), expressed as the retention factor k. Stronger affinity means longer stays in the film, a larger C term and a longer retention time. |
-| **Analyte 2 SP Affinity** (tick box plus its own slider, k = 0.3–10) | The tick box injects a second compound (green) together with the first (violet). It has its own k but the same diffusion coefficient, so only its C term differs. It gets its own band, its own dashed van Deemter curve and C·u line, and paired readouts, plus the resolution R<sub>s</sub> between the two bands. Switching it on starts a fresh injection. |
+| **Analyte 2 SP Affinity** (tick box plus its own slider, k = 0.3–10) | The tick box injects a second compound (green, in the animation) together with the first (violet). It has its own k but the same diffusion coefficient, so only its C term differs. It gets its own band, its own dashed van Deemter curve and C·u line, and paired readouts, plus the resolution R<sub>s</sub> between the two bands. Switching it on starts a fresh injection. |
 | **Term toggles** (A multipath effect, B/u longitudinal diffusion, C·u mass transfer) | Switch a term off in both the plot and the animation. Switching C·u off makes exchange between the phases instantaneous (the textbook meaning of C = 0): the analyte is still retained and moves at u/(1 + k), slower than the flow wisps, but mass transfer no longer broadens the band. |
 | **Ghost band** | A dashed profile showing how wide the band would be at the optimum flow rate, drawn at the same position in the column. |
 | **True-scale band** | Removes the 9× band-width magnification (see below). |
 
-Hover over the van Deemter plot to read values at any velocity; click or drag on it to set the flow rate. "Show the curve as a table" lists the same values.
+Hover over the van Deemter plot to read values at any velocity (Escape closes the tooltip); click or drag on it to set the flow rate, which the Flow rate slider also does. "Show the curve as a table" lists the same values.
+
+## Presentation mode
+
+For lecture halls: the same page with larger text, thicker chart lines and higher-contrast colours, and the lede, hints, notes and footer hidden.
+
+- Press **Present** (top right), or **Alt + Shift + P** (Option + Shift + P on a Mac). Escape leaves it; so does leaving full screen.
+- Add `?present=1` to the address to open the page ready to present, for example from a slide: `https://analyticalchem.github.io/van-deemter-explorer/?present=1`.
+- The enlargement applies on screens at least 900 px wide. Everything else, including the controls, keyboard operation, tables and your theme choice, stays the same.
 
 ## The model
 
@@ -74,16 +82,36 @@ A real column has tens of thousands of plates, and a molecule moves between the 
 
 Just after injection, the histogram runs a little wider than the predicted curve. This is because each molecule is caught partway through a hop. The difference fades as the band travels and is a few percent by the outlet. Checked in the browser with 4,000 molecules per run: the band centre matched the prediction to within 0.02 σ, the stationary-phase fraction matched k/(1 + k), and the variance at the outlet was within 8% of the prediction under every condition tested.
 
+## Accessibility
+
+Van Deemter Explorer aims to conform to the Web Content Accessibility Guidelines (WCAG) 2.1 Level AA, the standard the U.S. Department of Justice's ADA Title II web rule adopts, and follows the analyticalchem web style.
+
+What the page provides:
+
+- Every control is a native HTML control with a visible label, and works from the keyboard: Tab to move, arrow keys for sliders, Space or Enter for buttons and tick boxes. Nothing depends on dragging.
+- Every number the animation and charts show is also on the page as text: the Calculated Results panel, the running caption under the column, and the van Deemter data table.
+- The canvases have text descriptions. Chart series are told apart by labels, line style (solid or dashed) and marker shape (circle or diamond), not colour alone. Text meets 4.5:1 contrast, and chart marks and controls meet 3:1, in light and dark themes.
+- The animation can be paused (Pause, before the animation in reading order), and nothing flashes.
+- The page reflows to one column at 320 px wide and works at 200% and 400% zoom.
+- Presentation mode (above) enlarges everything for projection and raises contrast further, without changing the page structure.
+
+Known limitations:
+
+- Screen-reader testing with NVDA and VoiceOver has not been done yet.
+- The up-and-down paths of the molecules and the 9× band magnification are illustrative. The page states both, and the readouts give real-column values.
+
+To report a problem or ask for help using the page, [open an issue on GitHub](https://github.com/analyticalchem/van-deemter-explorer/issues/new) describing the page, what you were trying to do, and the browser and assistive technology you use. We aim to reply within 10 business days.
+
 ## Files
 
 ```
 index.html        page structure and text
-css/styles.css    layout, light/dark themes
+css/styles.css    tokens, layout, components, themes, presentation mode
 js/model.js       van Deemter physics (pure functions)
 js/sim.js         stochastic molecule simulation (no DOM)
 js/column.js      column animation (canvas)
 js/plots.js       band profile and van Deemter plot (canvas)
-js/main.js        wires controls, model, simulation and views
+js/main.js        wires controls, model, simulation, views, theme and presentation mode
 ```
 
 ## License

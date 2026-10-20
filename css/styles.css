@@ -154,6 +154,10 @@ body:not(.two-analytes) .both-only { display: none !important; }
 *, *::before, *::after { box-sizing: border-box; }
 
 html { -webkit-text-size-adjust: 100%; }
+/* Large screens: the root steps up so text keeps pace with the bigger panels.
+   Both need a minimum height, so a wide but short window keeps the normal size. */
+@media (min-width: 1600px) and (min-height: 900px) { html { font-size: 112.5%; } }
+@media (min-width: 2200px) and (min-height: 1200px) { html { font-size: 125%; } }
 
 body {
   margin: 0;
@@ -183,11 +187,13 @@ h3 { font-size: 0.95rem; font-weight: 620; margin: 1rem 0 0.35rem; }
 .skip-link:focus { top: 16px; z-index: 10; outline: 2px solid var(--text-primary); outline-offset: 2px; }
 
 .nowrap { white-space: nowrap; }
+sub, sup { font-size: max(78%, 0.75rem); }
 
 /* ---------- Header ---------- */
 
+/* The page fills the window; only running text (lede, notes) keeps a measure. */
 .site-header, main, .site-footer {
-  max-width: 1200px;
+  width: 100%;
   margin: 0 auto;
   padding-left: 24px;
   padding-right: 24px;
@@ -308,7 +314,8 @@ input[type="range"]:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .control-sub { margin: 0; font-size: 0.82rem; color: var(--text-secondary); }
 
-.presets { display: flex; gap: 6px; flex-wrap: wrap; }
+.presets { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.option-label { margin-right: 2px; font-size: 0.82rem; color: var(--text-secondary); }
 
 .chip {
   padding: 2px 10px;
@@ -364,41 +371,58 @@ select {
 
 /* ---------- Visuals ---------- */
 
-/* Heights live in --h so presentation mode can scale them. */
+/* Heights live in --h so presentation mode can scale them. Each upper bound
+   grows with the window height, so on a big screen the visuals get taller
+   instead of turning into wide, flat strips; the floors in the caps keep
+   laptop sizes as they were. */
 .visual { display: block; width: 100%; height: var(--h); }
-.column-canvas { --h: clamp(190px, 24vw, 260px); }
-.band-canvas { --h: clamp(120px, 13vw, 160px); margin-top: 4px; }
-.vd-canvas { --h: 340px; cursor: crosshair; touch-action: none; }
+.column-canvas { --h: clamp(190px, 20.3vw, max(260px, 34vh)); }
+.band-canvas { --h: clamp(120px, 12.5vw, max(160px, 22vh)); margin-top: 4px; }
+.vd-canvas { --h: clamp(340px, 26.5vw, max(340px, 48vh)); cursor: crosshair; touch-action: none; }
 
-.legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 18px;
-  margin-top: 10px;
-  font-size: 0.82rem;
-  color: var(--text-secondary);
-}
-.legend + .legend { margin-top: 4px; }
-.lg { display: inline-flex; align-items: center; gap: 7px; }
-.lg[hidden] { display: none; }
+/* Grid legend: one entry per cell, swatch in a 26 px column, then the words. */
+.lg-key { display: inline-block; flex: none; width: 26px; height: 3px; border-radius: 2px; background: var(--key); vertical-align: middle; }
+.lg-key.thick { height: 5px; }
+.lg-key.dashed, .tip-key.dashed { height: 0; border-radius: 0; background: none; border-top: 3px dashed var(--key); }
+/* Threshold wash: the 1 px border carries the key colour; the 3 px top matches the bar drawn on the chart. */
+.lg-wash { display: inline-block; flex: none; width: 22px; height: 14px; border-radius: 2px; background: color-mix(in srgb, var(--key) 22%, transparent); border: 1px solid var(--key); border-top-width: 3px; }
 
 .lg-sphere {
-  width: 10px; height: 10px; border-radius: 50%;
+  display: inline-block; flex: none; width: 10px; height: 10px; border-radius: 50%;
   background: radial-gradient(circle at 35% 35%, var(--analyte-hi), var(--analyte) 55%, var(--analyte-lo));
 }
 .lg-particle {
-  width: 14px; height: 14px; border-radius: 50%;
+  display: inline-block; flex: none; width: 14px; height: 14px; border-radius: 50%;
   background: radial-gradient(circle at 35% 35%, var(--particle-hi), var(--particle) 60%);
   box-shadow: 0 0 0 3px var(--film), 0 0 0 4px var(--film-edge);
-  margin: 0 4px;
 }
-.lg-streak { width: 16px; height: 2px; border-radius: 1px; background: var(--streak); }
-.lg-bar { width: 8px; height: 12px; border-radius: 2px 2px 0 0; background: color-mix(in srgb, var(--analyte) 30%, transparent); border-top: 2px solid var(--analyte); }
-.lg-line { width: 18px; height: 2px; border-radius: 1px; background: var(--analyte); }
-.lg-dash { width: 18px; height: 0; border-top: 2px dashed var(--text-secondary); }
-.lg-key { display: inline-block; width: 16px; height: 2.5px; border-radius: 2px; background: var(--key); vertical-align: middle; }
-.lg-key.dashed, .tip-key.dashed { height: 0; border-radius: 0; background: none; border-top: 2.5px dashed var(--key); }
-.lg-wash { width: 14px; height: 12px; border-radius: 2px; background: color-mix(in srgb, var(--key) 22%, transparent); border-top: 3px solid var(--key); }
+.lg-streak { display: inline-block; flex: none; width: 16px; height: 2px; border-radius: 1px; background: var(--streak); }
+.lg-bar { display: inline-block; flex: none; width: 8px; height: 14px; border-radius: 2px 2px 0 0; background: color-mix(in srgb, var(--analyte) 30%, transparent); border-top: 2px solid var(--analyte); }
+
+.legend {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 13rem), 1fr));
+  gap: 6px 20px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.875rem;
+  line-height: 1.35;
+  color: var(--text-primary);
+}
+.legend + .legend { margin-top: 6px; }
+.lg { display: grid; grid-template-columns: 26px minmax(0, 1fr); column-gap: 10px; align-items: start; }
+.lg[hidden] { display: none; }
+.lg > :first-child { justify-self: center; }
+/* Centre each swatch on the first line: half the line-height (0.675em) minus half the swatch. */
+.lg > .lg-key { margin-top: calc(0.675em - 1.5px); }
+.lg > .lg-key.thick { margin-top: calc(0.675em - 2.5px); }
+.lg > .lg-wash { margin-top: calc(0.675em - 7px); }
+.lg > .lg-sphere { margin-top: calc(0.675em - 5px); }
+.lg > .lg-particle { margin-top: calc(0.675em - 7px); }
+.lg > .lg-streak { margin-top: calc(0.675em - 1px); }
+.lg > .lg-bar { margin-top: calc(0.675em - 7px); }
+.legend-note { margin: 6px 0 0; font-size: 0.85rem; color: var(--text-secondary); }
 
 .live {
   margin: 10px 0 0;
@@ -456,6 +480,7 @@ th { color: var(--text-secondary); font-weight: 600; }
 .rs-value { font-size: 1.1rem; font-weight: 650; line-height: 1.2; font-variant-numeric: tabular-nums; }
 .parts { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 6px; font-size: 0.88rem; color: var(--text-secondary); }
 .parts span { display: inline-flex; align-items: center; gap: 6px; }
+.parts .lg-key { width: 16px; }
 .parts strong { color: var(--text-primary); font-weight: 600; font-variant-numeric: tabular-nums; }
 .parts-unit { color: var(--text-muted); }
 
@@ -549,7 +574,7 @@ html[data-present] .present-hint { display: block; margin: 12px 0 0; color: var(
 @media (min-width: 900px) {
   html[data-present] { font-size: 125%; }
   html[data-present] body { font-size: 1rem; }
-  html[data-present] .site-header, html[data-present] main { max-width: none; padding-left: 32px; padding-right: 32px; }
+  html[data-present] .site-header, html[data-present] main { padding-left: 32px; padding-right: 32px; }
   html[data-present] main { gap: 20px; }
   html[data-present] h1 { font-size: 2.8rem; }
   html[data-present] h2, html[data-present] .notes summary { font-size: 1.5rem; }
@@ -560,7 +585,7 @@ html[data-present] .present-hint { display: block; margin: 12px 0 0; color: var(
   html[data-present] input[type="range"] { height: 36px; }
   html[data-present] .check input, html[data-present] .control .toggle input { width: 24px; height: 24px; }
   html[data-present] .btn { padding: 12px 24px; }
-  html[data-present] .visual { height: calc(var(--h) * 1.5); }
+  html[data-present] .visual { height: min(calc(var(--h) * 1.5), 80vh); }
   html[data-present] .tooltip { font-size: 1rem; min-width: 220px; }
   html[data-present] :is(a, button, input, select, summary, [tabindex]):focus-visible { outline-width: 3px; outline-offset: 3px; }
 
@@ -580,7 +605,7 @@ html[data-present] .present-hint { display: block; margin: 12px 0 0; color: var(
   html[data-present]:not([data-theme="light"]) {
     --text-secondary: #d6d5cb; --text-muted: #b3b1a7; --axis: #8a8880; --grid: #3a3a37;
     --series-a: #22b07f; --series-b: #e8672f; --series-c: #4a93ec; --series-d: #a89ff0;
-    --critical-text: #f28b85; --success-text: #3dbb3d;
+    --critical-text: #f28b85; --success-text: #40bf40;
     --analyte2: #35ad35; --film: #382a14; --film-edge: #b08634;   /* molecules >= 4.7:1 on the film, outline 4.9:1 */
   }
 }
@@ -588,7 +613,7 @@ html[data-present] .present-hint { display: block; margin: 12px 0 0; color: var(
   html[data-present][data-theme="dark"] {
     --text-secondary: #d6d5cb; --text-muted: #b3b1a7; --axis: #8a8880; --grid: #3a3a37;
     --series-a: #22b07f; --series-b: #e8672f; --series-c: #4a93ec; --series-d: #a89ff0;
-    --critical-text: #f28b85; --success-text: #3dbb3d;
+    --critical-text: #f28b85; --success-text: #40bf40;
     --analyte2: #35ad35; --film: #382a14; --film-edge: #b08634;
   }
 }

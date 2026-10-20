@@ -82,6 +82,10 @@ A real column has tens of thousands of plates, and a molecule moves between the 
 
 Just after injection, the histogram runs a little wider than the predicted curve. This is because each molecule is caught partway through a hop. The difference fades as the band travels and is a few percent by the outlet. Checked in the browser with 4,000 molecules per run: the band centre matched the prediction to within 0.02 σ, the stationary-phase fraction matched k/(1 + k), and the variance at the outlet was within 8% of the prediction under every condition tested.
 
+## Releasing
+
+Every stylesheet and script link in `index.html` ends in the same `?v=YYYYMMDD-n` tag (the release date, then a counter for a second release that day). Change all of them to a new value in any release that changes a CSS or JS file. GitHub Pages lets browsers reuse cached files for up to 10 minutes, so without a new tag a visitor can get the new page with the old scripts and styles; a new tag is a new address, so the browser fetches the matching files at once.
+
 ## Files
 
 ```

@@ -6,7 +6,8 @@
   <title>Van Deemter Explorer</title>
   <meta name="description" content="Explore how flow rate, temperature, particle size and stationary-phase affinity set plate height and band broadening in liquid chromatography.">
   <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2032%2032'%3E%3Cpath%20d='M2%2028%20C%2010%2028,%2012%204,%2016%204%20S%2022%2028,%2030%2028'%20fill='none'%20stroke='%234a3aa7'%20stroke-width='3'%20stroke-linecap='round'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="css/styles.css">
+  <!-- ?v= tags: change all of them to a new value with every release so browsers fetch the new files. -->
+  <link rel="stylesheet" href="css/styles.css?v=20261019-1">
   <script>
     // Apply the saved theme before first paint so the page does not flash.
     try {
@@ -86,11 +87,12 @@
             <output id="dp-out" for="dp"></output>
           </div>
           <input id="dp" type="range" min="1.5" max="10" step="0.1" value="5">
-          <div class="presets" role="group" aria-label="Common particle sizes">
-            <button type="button" class="chip" data-dp="1.7">1.7</button>
-            <button type="button" class="chip" data-dp="3">3</button>
-            <button type="button" class="chip" data-dp="5">5</button>
-            <button type="button" class="chip" data-dp="10">10&nbsp;µm</button>
+          <div class="presets" role="group" aria-labelledby="dp-presets-label">
+            <span class="option-label" id="dp-presets-label">Common sizes (µm)</span>
+            <button type="button" class="chip" data-dp="1.7" aria-pressed="false">1.7</button>
+            <button type="button" class="chip" data-dp="3" aria-pressed="false">3</button>
+            <button type="button" class="chip" data-dp="5" aria-pressed="true">5</button>
+            <button type="button" class="chip" data-dp="10" aria-pressed="false">10</button>
           </div>
         </div>
 
@@ -141,15 +143,15 @@
         aria-label="Animation of analyte molecules flowing through a packed column. Molecules stop in the stationary liquid film when they touch a packing particle, then rejoin the flow. Band positions are in the caption below this panel and the values are in Calculated Results."></canvas>
       <canvas id="band" class="visual band-canvas" role="img"
         aria-label="Distribution of analyte along the column: histogram of the molecules and the predicted Gaussian band, with the 4 sigma peak width marked. The band widths are in Calculated Results."></canvas>
-      <div class="legend">
-        <span class="lg a1-only"><span class="lg-sphere" aria-hidden="true"></span>Analyte 1 molecule</span>
-        <span class="lg a2-only"><span class="lg-sphere a2" aria-hidden="true"></span>Analyte 2 molecule</span>
-        <span class="lg"><span class="lg-particle" aria-hidden="true"></span>Support particle with stationary liquid film</span>
-        <span class="lg"><span class="lg-streak" aria-hidden="true"></span>Mobile-phase flow</span>
-        <span class="lg"><span class="lg-bar" aria-hidden="true"></span>Molecules per slice (bars)</span>
-        <span class="lg"><span class="lg-line" aria-hidden="true"></span>Predicted band, σ² = H·x (solid line)</span>
-        <span class="lg" id="lg-ghost"><span class="lg-dash" aria-hidden="true"></span>Same band at u<sub>opt</sub> (dashed line)</span>
-      </div>
+      <ul class="legend" role="list">
+        <li class="lg a1-only"><span class="lg-sphere" aria-hidden="true"></span><span>Analyte 1 molecule</span></li>
+        <li class="lg a2-only"><span class="lg-sphere a2" aria-hidden="true"></span><span>Analyte 2 molecule</span></li>
+        <li class="lg"><span class="lg-particle" aria-hidden="true"></span><span>Support particle with stationary liquid film</span></li>
+        <li class="lg"><span class="lg-streak" aria-hidden="true"></span><span>Mobile-phase flow</span></li>
+        <li class="lg"><span class="lg-bar" aria-hidden="true"></span><span>Molecules per slice</span></li>
+        <li class="lg"><span class="lg-key" style="--key: var(--analyte)" aria-hidden="true"></span><span>Predicted band, σ² = H·x</span></li>
+        <li class="lg" id="lg-ghost"><span class="lg-key dashed" style="--key: var(--text-secondary)" aria-hidden="true"></span><span>Same band at u<sub>opt</sub></span></li>
+      </ul>
       <p class="live" id="live"></p>
     </section>
 
@@ -164,18 +166,19 @@
             aria-label="Van Deemter plot: plate height against linear velocity, with the A, B/u and C·u terms. The values are in the table below."></canvas>
           <div id="vd-tip" class="tooltip" hidden></div>
         </div>
-        <div class="legend">
-          <span class="lg a1-only"><span class="lg-key" style="--key: var(--text-primary)" aria-hidden="true"></span>Analyte 1: solid curves, ● current flow, ○ optimum</span>
-          <span class="lg a2-only"><span class="lg-key dashed" style="--key: var(--text-primary)" aria-hidden="true"></span>Analyte 2: dashed curves, ◆ current flow, ◇ optimum</span>
-        </div>
-        <div class="legend">
-          <span class="lg"><span class="lg-key" style="--key: var(--text-primary)" aria-hidden="true"></span>H, total</span>
-          <span class="lg"><span class="lg-key" style="--key: var(--series-a)" aria-hidden="true"></span>A</span>
-          <span class="lg"><span class="lg-key" style="--key: var(--series-b)" aria-hidden="true"></span>B/u</span>
-          <span class="lg"><span class="lg-key" style="--key: var(--series-c)" aria-hidden="true"></span>C·u</span>
-          <span class="lg"><span class="lg-wash" style="--key: var(--status-warning)" aria-hidden="true"></span>▲ &gt; 400 bar</span>
-          <span class="lg"><span class="lg-wash" style="--key: var(--status-critical)" aria-hidden="true"></span>✕ &gt; 1300 bar</span>
-        </div>
+        <ul class="legend" role="list">
+          <li class="lg a1-only"><span class="lg-key" style="--key: var(--text-primary)" aria-hidden="true"></span><span>Analyte 1: solid curves, ● current flow, ○ optimum</span></li>
+          <li class="lg a2-only"><span class="lg-key dashed" style="--key: var(--text-primary)" aria-hidden="true"></span><span>Analyte 2: dashed curves, ◆ current flow, ◇ optimum</span></li>
+        </ul>
+        <ul class="legend" role="list">
+          <li class="lg"><span class="lg-key thick" style="--key: var(--text-primary)" aria-hidden="true"></span><span>H, total</span></li>
+          <li class="lg"><span class="lg-key" style="--key: var(--series-a)" aria-hidden="true"></span><span>A</span></li>
+          <li class="lg"><span class="lg-key" style="--key: var(--series-b)" aria-hidden="true"></span><span>B/u</span></li>
+          <li class="lg"><span class="lg-key" style="--key: var(--series-c)" aria-hidden="true"></span><span>C·u</span></li>
+          <li class="lg"><span class="lg-wash" style="--key: var(--status-warning)" aria-hidden="true"></span><span>▲ above 400 bar</span></li>
+          <li class="lg"><span class="lg-wash" style="--key: var(--status-critical)" aria-hidden="true"></span><span>✕ above 1300 bar</span></li>
+        </ul>
+        <p class="legend-note">Each curve is named at its right-hand end.</p>
         <details class="table-view">
           <summary>Show the curve as a table</summary>
           <div class="table-scroll" tabindex="0" role="region" aria-label="Van Deemter data table, scrolls sideways"><table id="vd-table"></table></div>
@@ -304,10 +307,10 @@
 
   <p id="present-status" class="visually-hidden" role="status"></p>
 
-  <script src="js/model.js"></script>
-  <script src="js/sim.js"></script>
-  <script src="js/column.js"></script>
-  <script src="js/plots.js"></script>
-  <script src="js/main.js"></script>
+  <script src="js/model.js?v=20261019-1"></script>
+  <script src="js/sim.js?v=20261019-1"></script>
+  <script src="js/column.js?v=20261019-1"></script>
+  <script src="js/plots.js?v=20261019-1"></script>
+  <script src="js/main.js?v=20261019-1"></script>
 </body>
 </html>

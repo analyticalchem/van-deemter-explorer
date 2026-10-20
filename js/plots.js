@@ -84,6 +84,26 @@
     g.fillText(text, x, y);
   }
 
+  /**
+   * Halo text with a drawn subscript ("u" + "opt"). The subscript is
+   * max(0.75 × the label size, --chart-font-small), so it never drops below the
+   * tick-label size, and it sits 0.3 em low. Honours the current textAlign.
+   */
+  function haloSubText(g, base, sub, x, y, C) {
+    var size = C.font, subSize = Math.max(0.75 * size, C.fontSmall);
+    var font = size + 'px ' + FONT, subFont = subSize + 'px ' + FONT;
+    g.font = font;
+    var wb = g.measureText(base).width;
+    g.font = subFont;
+    var w = wb + g.measureText(sub).width, align = g.textAlign;
+    var x0 = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x;
+    g.textAlign = 'left';
+    haloText(g, sub, x0 + wb, y + 0.3 * size, C);
+    g.font = font;
+    haloText(g, base, x0, y, C);
+    g.textAlign = align;
+  }
+
   // ---------------------------------------------------------------------------
 
   /** species: [{ sim, color }] with color the analyte's CSS custom property. */
@@ -652,14 +672,16 @@
       g.lineWidth = C.line;
       g.lineJoin = 'miter';
       g.stroke();
-      var text = opt.interior ? 'u_opt' + sub(a.id) : 'best in range' + sub(a.id);
       // Put the second label above its marker if it would collide with the first.
       var above = optLabels.some(function (p) { return Math.abs(p.x - ox) < 48 * s && Math.abs(p.y - oy) < 2 * C.font; });
       optLabels.push({ x: ox, y: oy });
       g.fillStyle = C.text2;
       g.textAlign = 'center';
       g.textBaseline = above ? 'bottom' : 'top';
-      haloText(g, text, ox, above ? oy - labelGap : oy + labelGap, C);
+      var ly = above ? oy - labelGap : oy + labelGap;
+      // u_opt with a real subscript ("opt,1" when both analytes are shown).
+      if (opt.interior) haloSubText(g, 'u', 'opt' + (two ? ',' + (a.id + 1) : ''), ox, ly, C);
+      else haloText(g, 'best in range' + sub(a.id), ox, ly, C);
     });
 
     // Current operating point on each curve (an arrow at the top edge if off the scale).

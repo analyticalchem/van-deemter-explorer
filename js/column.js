@@ -107,7 +107,8 @@
     this.r = r;
     this.film = Math.max(1.5, 0.22 * r);
     // Analyte size follows the drawing size only, never the packing particle size.
-    this.rm = Math.max(2.6, Math.min(3.6, 0.016 * tubeH));
+    // The cap lets molecules keep pace when the column grows on a big screen.
+    this.rm = Math.max(2.6, Math.min(5, 0.016 * tubeH));
     this.Rout = r + this.film;            // mobile molecules stay outside the film
     this.Rc = r + this.film * 0.5;        // retained molecules sit inside the film
     // Deliberately open packing: spacing 4r along the column, √5·r between rows,

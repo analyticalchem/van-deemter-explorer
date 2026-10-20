@@ -1,0 +1,104 @@
+/* Van Deemter Explorer: this page's own layout for the Column panel, where the controls sit with the
+   drawing they drive (style guide 7.18, the toolbar and Settings drop-down). House tokens and components
+   are in css/styles.css.
+
+   The panel holds, in source order: the toolbar (the column conditions and the two analytes, then Inject,
+   Pause and a Settings drop-down for the occasional options), the column drawing, the band profile, and the
+   flow-rate slider full width under them. Pause stays in the toolbar, before the animation (2.2.2). */
+
+/* ---------- Toolbar ---------- */
+
+.toolbar { display: grid; gap: 12px; margin-bottom: 12px; }
+.tb-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 24px; }
+.tb-item { position: relative; min-width: 0; }
+.tb-label { font-weight: 600; font-size: 0.9rem; }
+.tb-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* The set-up controls: one-line sliders (label, slider, value), two to a row, with any caption or presets
+   on a second line. A subgrid lines the two rows up, so their sliders start and end together. */
+.tb-setup { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 32px; }
+.tb-slider { display: grid; grid-template-columns: auto minmax(6rem, 1fr) auto; align-items: center; align-content: start; gap: 2px 12px; }
+@supports (grid-template-columns: subgrid) {
+  .tb-setup { grid-template-columns: auto minmax(6rem, 1fr) auto 8px auto minmax(6rem, 1fr) auto; column-gap: 12px; }
+  .tb-setup > .tb-slider { grid-template-columns: subgrid; }
+  .tb-setup > .tb-slider:nth-child(odd) { grid-column: 1 / span 3; }
+  .tb-setup > .tb-slider:nth-child(even) { grid-column: 5 / span 3; }
+}
+.tb-slider > input[type="range"] { margin: 0; }
+.tb-slider > output { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; min-width: 4.5em; }
+.tb-slider > .control-sub, .tb-slider > .presets { grid-column: 1 / -1; }
+.tb-slider .toggle { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 0.9rem; cursor: pointer; }
+.tb-slider .toggle input { accent-color: var(--accent); width: 16px; height: 16px; margin: 0; }
+.tb-slider .toggle .akey { margin-right: 0; }
+
+/* A typing box's error message opens over what is next to it, so the panel keeps its size. */
+.tb-msg {
+  position: absolute; left: 0; top: calc(100% + 4px); z-index: 30; width: max-content; max-width: 22rem;
+  margin: 0; padding: 4px 8px; background: var(--surface); border: 1px solid var(--critical-text); border-radius: 6px;
+}
+.tb-msg:empty { display: none; }
+
+/* ---------- Settings drop-down ---------- */
+
+/* A native disclosure styled as a button with a chevron, filled while open. */
+.settings { position: relative; z-index: 20; }
+.settings > summary { display: inline-flex; align-items: center; gap: 8px; list-style: none; }
+.settings > summary::-webkit-details-marker { display: none; }
+.settings > summary::after {
+  content: ""; width: 7px; height: 7px; border: solid currentColor; border-width: 0 2px 2px 0;
+  transform: translateY(-2px) rotate(45deg);
+}
+.settings[open] > summary { background: var(--text-primary); color: var(--surface); border-color: transparent; }
+.settings[open] > summary::after { transform: translateY(2px) rotate(-135deg); }
+/* Closed, the panel has no box at all (some browsers keep a hidden one, sized for a different width). */
+.settings:not([open]) > .settings-panel { display: none; }
+.settings-panel {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); gap: 16px 32px;
+  margin-top: 10px; padding: 14px 18px 16px; background: var(--surface);
+  border: 2px solid var(--text-muted); border-radius: var(--radius);
+}
+/* This page scrolls (it is not a one-screen instrument page), so the open panel takes a row of its own,
+   the full width of the toolbar, and pushes the drawing down. */
+html:not(.one-screen) .settings[open] { flex: 1 1 100%; }
+.settings-group { display: grid; gap: 12px; align-content: start; justify-items: start; }
+.settings-group .info-title {
+  margin: 0; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-secondary);
+}
+
+/* ---------- Flow-rate slider under the drawing ---------- */
+
+/* Flow rate is the van Deemter plot's x axis, the one setting changed most, so it runs the width of the
+   drawing: label and typing box, slider, then the linear velocity it gives. */
+.flow-bar {
+  position: relative; display: grid; grid-template-columns: auto minmax(10rem, 1fr) auto;
+  gap: 4px 16px; align-items: center; margin-top: 12px;
+}
+.flow-bar .control-head { display: flex; align-items: baseline; gap: 10px; }
+.flow-bar label { font-weight: 600; }
+.flow-bar input[type="range"] { margin: 0; }
+.flow-bar .control-sub { margin: 0; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.flow-bar .tb-msg { top: auto; bottom: calc(100% + 4px); }
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 980px) {
+  .tb-setup { grid-template-columns: auto minmax(6rem, 1fr) auto; }
+  .tb-setup > .tb-slider:nth-child(n) { grid-column: 1 / -1; }
+}
+
+@media (max-width: 560px) {
+  /* Phones: each slider drops under its label and value, as in the house control block. */
+  .tb-setup { grid-template-columns: minmax(0, 1fr); }
+  .tb-setup > .tb-slider:nth-child(n) { grid-column: auto; grid-template-columns: minmax(0, 1fr) auto; }
+  .tb-slider > input[type="range"] { grid-column: 1 / -1; grid-row: 2; }
+  .flow-bar { grid-template-columns: minmax(0, 1fr); }
+  .flow-bar .control-sub { white-space: normal; }
+}
+
+/* ---------- Presentation mode ---------- */
+
+@media (min-width: 900px) {
+  html[data-present] .tb-label, html[data-present] .tb-slider .toggle { font-size: 1.05rem; }
+  html[data-present] .tb-slider .toggle input { width: 24px; height: 24px; }
+  html[data-present] .settings-group .info-title { font-size: 0.9rem; }
+}

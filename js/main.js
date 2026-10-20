@@ -23,7 +23,7 @@
 
   var els = {
     flow: $('flow'), temp: $('temp'), dp: $('dp'),
-    flowOut: $('flow-out'), flowSub: $('flow-sub'),
+    flowNum: $('flow-num'), flowMsg: $('flow-num-msg'), flowSub: $('flow-sub'), settings: $('settings'),
     tempOut: $('temp-out'), dpOut: $('dp-out'),
     inject: $('inject'), pause: $('pause'), speed: $('speed'),
     ghost: $('ghost'), trueScale: $('truescale'), auto: $('auto'), autoY: $('autoy'),
@@ -34,6 +34,7 @@
   };
 
   var state = {
+    F: +$('flow').value,   // flow rate in mL/min; a typed value is kept exactly, off the slider's steps
     terms: { A: true, B: true, C: true },
     paused: false,
     speed: 1,
@@ -68,7 +69,7 @@
   var cur = null;
 
   function readInputs() {
-    return { F: +els.flow.value, Tc: +els.temp.value, dpUm: +els.dp.value };
+    return { F: state.F, Tc: +els.temp.value, dpUm: +els.dp.value };
   }
 
   function recompute() {
@@ -121,6 +122,48 @@
     F = Math.round(F / step) * step;
     F = Math.max(P.Fmin, Math.min(P.Fmax, F));
     els.flow.value = F.toFixed(2);
+    state.F = F;
+    clearFlowMsg();
+    recompute();
+  }
+
+  // --- the flow-rate typing box (style guide 7.4) ---------------------------------
+
+  /** Flow shown in the box: two decimals, three if that is what was typed. */
+  function flowText(F) {
+    return F.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 3 });
+  }
+
+  /** Read a typed flow rate in mL/min: 1.5, 1.5 mL/min, 0.75ml/min, 500 µL/min, 1e0. NaN if unreadable. */
+  function parseFlow(text) {
+    var t = String(text).trim().replace(/[−–]/g, '-').replace(/,/g, '').replace(/\s+/g, '').replace(/^\+/, '');
+    var m = /^(-?\d*\.?\d+(?:e[-+]?\d+)?)((?:m|µ|u|μ)?l(?:\/min)?)?$/i.exec(t);
+    if (!m) return NaN;
+    var v = parseFloat(m[1]), unit = (m[2] || '').toLowerCase();
+    if (/^[µuμ]/.test(unit)) v /= 1000;
+    else if (unit && unit[0] !== 'm') v *= 1000;   // plain L/min
+    return v;
+  }
+
+  function clearFlowMsg() {
+    els.flowNum.removeAttribute('aria-invalid');
+    els.flowMsg.textContent = '';
+  }
+
+  function applyFlowNum() {
+    els.flowNum._editing = false;
+    var v = parseFlow(els.flowNum.value), msg = '';
+    if (isNaN(v)) {
+      els.flowNum.setAttribute('aria-invalid', 'true');
+      els.flowMsg.textContent = 'Type a flow rate from ' + fmt(P.Fmin, 2) + ' to ' + fmt(P.Fmax, 0) + NB + 'mL/min, such as 1.5.';
+      return;
+    }
+    if (v > P.Fmax) { v = P.Fmax; msg = 'Set to ' + fmt(P.Fmax, 0) + NB + 'mL/min, the largest allowed.'; }
+    if (v < P.Fmin) { v = P.Fmin; msg = 'Set to ' + fmt(P.Fmin, 2) + NB + 'mL/min, the smallest allowed.'; }
+    els.flowNum.removeAttribute('aria-invalid');
+    els.flowMsg.textContent = msg;
+    state.F = v;
+    els.flow.value = String(v);
     recompute();
   }
 
@@ -150,7 +193,8 @@
   function updateControls() {
     var inp = cur.inp;
     var cOff = state.terms.C ? '' : ' · C·u off, so exchange between phases is instantaneous';
-    els.flowOut.textContent = fmt(inp.F, 2) + NB + 'mL/min';
+    if (!els.flowNum._editing) els.flowNum.value = flowText(inp.F);
+    els.flow.setAttribute('aria-valuetext', flowText(inp.F) + ' millilitres per minute');
     els.flowSub.textContent = 'Linear velocity u = ' + fmt(cur.u * 1000, 2) + NB + 'mm/s';
     els.tempOut.textContent = inp.Tc + NB + '°C';
     els.dpOut.textContent = fmt(inp.dpUm, 1) + NB + 'µm';
@@ -376,8 +420,41 @@
 
   // --- events -----------------------------------------------------------------
 
-  [els.flow, els.temp, els.dp].forEach(function (el) {
+  [els.temp, els.dp].forEach(function (el) {
     el.addEventListener('input', recompute);
+  });
+
+  els.flow.addEventListener('input', function () {
+    state.F = +els.flow.value;
+    clearFlowMsg();
+    recompute();
+  });
+  els.flowNum.addEventListener('input', function () { els.flowNum._editing = true; });
+  els.flowNum.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); applyFlowNum(); }
+    else if (e.key === 'Escape' && els.flowNum._editing) {
+      // Abandon the edit; this Escape does not also close a tooltip or leave presentation mode.
+      e.stopPropagation();
+      els.flowNum._editing = false;
+      clearFlowMsg();
+      updateControls();
+    }
+  });
+  els.flowNum.addEventListener('blur', function () { if (els.flowNum._editing) applyFlowNum(); });
+
+  // Settings: Escape closes it first (capture phase, before the tooltip and presentation mode) and
+  // returns focus to its button, unless that Escape is abandoning an edit in a typing box outside it.
+  // A press outside the panel closes it too. A disclosure, not a dialog: no focus trap.
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape' || !els.settings.open) return;
+    if (e.target.classList && e.target.classList.contains('num') && !els.settings.contains(e.target)) return;
+    e.stopPropagation();
+    e.preventDefault();
+    els.settings.open = false;
+    els.settings.querySelector('summary').focus();
+  }, true);
+  document.addEventListener('pointerdown', function (e) {
+    if (els.settings.open && !els.settings.contains(e.target)) els.settings.open = false;
   });
 
   analytes.forEach(function (a) {
@@ -491,6 +568,7 @@
 
   // Browsers may restore the tick boxes on reload.
   analytes.forEach(function (a) { a.on = a.check.checked; });
+  state.F = +els.flow.value;
   if (!active().length) analytes[0].on = true;
   recompute();
   layout();

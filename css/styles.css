@@ -283,13 +283,6 @@ main { display: grid; gap: 16px; }
 
 /* ---------- Controls ---------- */
 
-/* Three column conditions on the first row, the analyte affinities on the second. */
-.sliders {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px 28px;
-}
-
 .control-head {
   display: flex;
   justify-content: space-between;
@@ -314,6 +307,18 @@ input[type="range"]:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .control-sub { margin: 0; font-size: 0.82rem; color: var(--text-secondary); }
 
+/* Typing box: an exact value in place of a slider's <output>; the slider and the box are one setting. */
+.entry { display: inline-flex; flex: none; align-items: baseline; gap: 5px; white-space: nowrap; }
+.num {
+  width: 5.4em; padding: 1px 6px; font: inherit; font-weight: 600; font-variant-numeric: tabular-nums; text-align: right;
+  color: var(--text-primary); background: var(--surface); border: 1px solid var(--border-strong); border-radius: 6px;
+}
+.num:disabled { opacity: 0.4; cursor: not-allowed; }
+.num[aria-invalid="true"] { border-color: var(--critical-text); box-shadow: 0 0 0 1px var(--critical-text); }
+.entry .unit { color: var(--text-secondary); font-weight: 600; }
+.num-msg { margin: 2px 0 0; font-size: 0.82rem; font-weight: 600; color: var(--critical-text); }
+.num-msg:empty { margin: 0; }
+
 .presets { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .option-label { margin-right: 2px; font-size: 0.82rem; color: var(--text-secondary); }
 
@@ -330,15 +335,6 @@ input[type="range"]:disabled { opacity: 0.4; cursor: not-allowed; }
 .chip:hover { background: var(--surface-2); }
 .chip[aria-pressed="true"] { background: var(--text-primary); color: var(--surface); border-color: transparent; }
 
-.run-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px 18px;
-  margin-top: 16px;
-  padding-top: 14px;
-  border-top: 1px solid var(--grid);
-}
 
 .btn {
   padding: 7px 16px;
@@ -539,7 +535,6 @@ th { color: var(--text-secondary); font-weight: 600; }
 /* ---------- Responsive ---------- */
 
 @media (max-width: 980px) {
-  .sliders { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .grid-2 { grid-template-columns: minmax(0, 1fr); }
 }
 
@@ -552,7 +547,6 @@ th { color: var(--text-secondary); font-weight: 600; }
   h1 { font-size: 2rem; }
   .title-rule { width: 200px; }
   .card { padding: 14px; }
-  .sliders { grid-template-columns: minmax(0, 1fr); }
   .pill { padding: 6px 10px; }
   .pill-name { display: none; }
   .vd-canvas { --h: 280px; }
@@ -580,7 +574,7 @@ html[data-present] .present-hint { display: block; margin: 12px 0 0; color: var(
   html[data-present] h2, html[data-present] .notes summary { font-size: 1.5rem; }
   html[data-present] .pill-sym { font-size: 1.5rem; }
   html[data-present] .legend, html[data-present] .live, html[data-present] .control-sub,
-  html[data-present] .tile-sub, html[data-present] .card-sub { font-size: 1.05rem; }
+  html[data-present] .tile-sub, html[data-present] .card-sub, html[data-present] .option-label { font-size: 1.05rem; }
   html[data-present] .chip { padding: 6px 16px; font-size: 1rem; }
   html[data-present] input[type="range"] { height: 36px; }
   html[data-present] .check input, html[data-present] .control .toggle input { width: 24px; height: 24px; }

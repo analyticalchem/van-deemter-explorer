@@ -8,6 +8,7 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2032%2032'%3E%3Cpath%20d='M2%2028%20C%2010%2028,%2012%204,%2016%204%20S%2022%2028,%2030%2028'%20fill='none'%20stroke='%234a3aa7'%20stroke-width='3'%20stroke-linecap='round'/%3E%3C/svg%3E">
   <!-- ?v= tags: change all of them to a new value with every release so browsers fetch the new files. -->
   <link rel="stylesheet" href="css/styles.css?v=20261019-1">
+  <link rel="stylesheet" href="css/page.css?v=20261019-1">
   <script>
     // Apply the saved theme before first paint so the page does not flash.
     try {
@@ -58,91 +59,97 @@
   </header>
 
   <main id="main">
-    <section class="card controls" aria-labelledby="controls-title">
+    <!-- The Column panel: the controls live with the drawing they drive (style guide 7.18). A toolbar
+         holds the column conditions and the analytes, then Inject, Pause and a Settings drop-down for the
+         occasional options; the flow-rate slider runs full width under the drawing. -->
+    <section class="card visual-card column-card" aria-labelledby="column-title">
       <div class="card-head">
-        <h2 id="controls-title">Column Conditions</h2>
-      </div>
-      <div class="sliders">
-        <div class="control">
-          <div class="control-head">
-            <label for="flow">Flow rate</label>
-            <output id="flow-out" for="flow"></output>
-          </div>
-          <input id="flow" type="range" min="0.05" max="5" step="0.05" value="1" aria-describedby="flow-sub">
-          <p class="control-sub" id="flow-sub"></p>
-        </div>
-
-        <div class="control">
-          <div class="control-head">
-            <label for="temp">Temperature</label>
-            <output id="temp-out" for="temp"></output>
-          </div>
-          <input id="temp" type="range" min="20" max="80" step="1" value="25" aria-describedby="temp-sub">
-          <p class="control-sub" id="temp-sub">Faster diffusion, lower viscosity</p>
-        </div>
-
-        <div class="control">
-          <div class="control-head">
-            <label for="dp">Particle size</label>
-            <output id="dp-out" for="dp"></output>
-          </div>
-          <input id="dp" type="range" min="1.5" max="10" step="0.1" value="5">
-          <div class="presets" role="group" aria-labelledby="dp-presets-label">
-            <span class="option-label" id="dp-presets-label">Common sizes (µm)</span>
-            <button type="button" class="chip" data-dp="1.7" aria-pressed="false">1.7</button>
-            <button type="button" class="chip" data-dp="3" aria-pressed="false">3</button>
-            <button type="button" class="chip" data-dp="5" aria-pressed="true">5</button>
-            <button type="button" class="chip" data-dp="10" aria-pressed="false">10</button>
-          </div>
-        </div>
-
-        <div class="control">
-          <div class="control-head">
-            <label class="toggle" for="a1-on"><input type="checkbox" id="a1-on" checked aria-label="Analyte 1 SP Affinity: show analyte 1"><span class="akey a1" aria-hidden="true"></span>Analyte 1 SP Affinity</label>
-            <output id="mt-out" for="mt"></output>
-          </div>
-          <input id="mt" type="range" min="0" max="100" step="1" value="54" aria-label="Analyte 1 SP Affinity" aria-describedby="mt-sub">
-          <p class="control-sub" id="mt-sub"></p>
-        </div>
-
-        <div class="control">
-          <div class="control-head">
-            <label class="toggle" for="a2-on"><input type="checkbox" id="a2-on" aria-label="Analyte 2 SP Affinity: show analyte 2"><span class="akey a2" aria-hidden="true"></span>Analyte 2 SP Affinity</label>
-            <output id="mt2-out" for="mt2"></output>
-          </div>
-          <input id="mt2" type="range" min="0" max="100" step="1" value="74" aria-label="Analyte 2 SP Affinity" aria-describedby="mt2-sub">
-          <p class="control-sub" id="mt2-sub"></p>
-        </div>
-      </div>
-
-      <div class="run-row">
-        <button id="inject" class="btn primary" type="button">Inject</button>
-        <button id="pause" class="btn" type="button">Pause</button>
-        <label class="select">Speed
-          <select id="speed">
-            <option value="0.25">0.25×</option>
-            <option value="0.5">0.5×</option>
-            <option value="1" selected>1×</option>
-            <option value="2">2×</option>
-            <option value="4">4×</option>
-            <option value="8">8×</option>
-          </select>
-        </label>
-        <label class="check"><input type="checkbox" id="ghost" checked> Ghost band at u<sub>opt</sub></label>
-        <label class="check"><input type="checkbox" id="truescale"> True-scale band</label>
-        <label class="check"><input type="checkbox" id="auto" checked> Re-inject automatically</label>
-      </div>
-    </section>
-
-    <section class="card visual-card" aria-labelledby="column-title">
-      <div class="card-head">
-        <h2 id="column-title">Inside the Column</h2>
+        <h2 id="column-title">Column</h2>
         <p class="card-sub" id="scale-note"></p>
       </div>
+
+      <div class="toolbar">
+        <div class="tb-setup">
+          <div class="tb-item tb-slider">
+            <label class="tb-label" for="temp">Temperature</label>
+            <input id="temp" type="range" min="20" max="80" step="1" value="25">
+            <output id="temp-out" for="temp"></output>
+          </div>
+
+          <div class="tb-item tb-slider">
+            <label class="tb-label" for="dp">Particle size</label>
+            <input id="dp" type="range" min="1.5" max="10" step="0.1" value="5">
+            <output id="dp-out" for="dp"></output>
+            <div class="presets" role="group" aria-labelledby="dp-presets-label">
+              <span class="option-label" id="dp-presets-label">Common sizes (µm)</span>
+              <button type="button" class="chip" data-dp="1.7" aria-pressed="false">1.7</button>
+              <button type="button" class="chip" data-dp="3" aria-pressed="false">3</button>
+              <button type="button" class="chip" data-dp="5" aria-pressed="true">5</button>
+              <button type="button" class="chip" data-dp="10" aria-pressed="false">10</button>
+            </div>
+          </div>
+
+          <div class="tb-item tb-slider">
+            <label class="toggle" for="a1-on"><input type="checkbox" id="a1-on" checked aria-label="Analyte 1 SP Affinity: show analyte 1"><span class="akey a1" aria-hidden="true"></span>Analyte 1 SP Affinity</label>
+            <input id="mt" type="range" min="0" max="100" step="1" value="54" aria-label="Analyte 1 SP Affinity" aria-describedby="mt-sub">
+            <output id="mt-out" for="mt"></output>
+            <p class="control-sub" id="mt-sub"></p>
+          </div>
+
+          <div class="tb-item tb-slider">
+            <label class="toggle" for="a2-on"><input type="checkbox" id="a2-on" aria-label="Analyte 2 SP Affinity: show analyte 2"><span class="akey a2" aria-hidden="true"></span>Analyte 2 SP Affinity</label>
+            <input id="mt2" type="range" min="0" max="100" step="1" value="74" aria-label="Analyte 2 SP Affinity" aria-describedby="mt2-sub">
+            <output id="mt2-out" for="mt2"></output>
+            <p class="control-sub" id="mt2-sub"></p>
+          </div>
+        </div>
+
+        <div class="tb-row tb-run">
+          <div class="tb-buttons">
+            <button id="inject" class="btn primary" type="button">Inject</button>
+            <button id="pause" class="btn" type="button">Pause</button>
+          </div>
+          <details class="settings" id="settings">
+            <summary class="btn">Settings</summary>
+            <div class="settings-panel">
+              <div class="settings-group">
+                <h3 class="info-title">Animation</h3>
+                <label class="select">Speed
+                  <select id="speed">
+                    <option value="0.25">0.25×</option>
+                    <option value="0.5">0.5×</option>
+                    <option value="1" selected>1×</option>
+                    <option value="2">2×</option>
+                    <option value="4">4×</option>
+                    <option value="8">8×</option>
+                  </select>
+                </label>
+                <label class="check"><input type="checkbox" id="auto" checked> Re-inject automatically</label>
+              </div>
+              <div class="settings-group">
+                <h3 class="info-title">Band profile</h3>
+                <label class="check"><input type="checkbox" id="ghost" checked><span>Ghost band at u<sub>opt</sub></span></label>
+                <label class="check"><input type="checkbox" id="truescale"> True-scale band</label>
+              </div>
+            </div>
+          </details>
+        </div>
+      </div>
+
       <canvas id="column" class="visual column-canvas" role="img"
         aria-label="Animation of analyte molecules flowing through a packed column. Molecules stop in the stationary liquid film when they touch a packing particle, then rejoin the flow. Band positions are in the caption below this panel and the values are in Calculated Results."></canvas>
       <canvas id="band" class="visual band-canvas" role="img"
         aria-label="Distribution of analyte along the column: histogram of the molecules and the predicted Gaussian band, with the 4 sigma peak width marked. The band widths are in Calculated Results."></canvas>
+
+      <div class="flow-bar">
+        <div class="control-head">
+          <label for="flow">Flow rate</label>
+          <span class="entry"><input class="num" id="flow-num" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" aria-label="Flow rate, in millilitres per minute" aria-describedby="flow-num-msg"><span class="unit" aria-hidden="true">mL/min</span></span>
+        </div>
+        <input id="flow" type="range" min="0.05" max="5" step="0.05" value="1" aria-describedby="flow-sub">
+        <p class="control-sub" id="flow-sub"></p>
+        <p class="num-msg tb-msg" id="flow-num-msg" role="alert"></p>
+      </div>
       <ul class="legend" role="list">
         <li class="lg a1-only"><span class="lg-sphere" aria-hidden="true"></span><span>Analyte 1 molecule</span></li>
         <li class="lg a2-only"><span class="lg-sphere a2" aria-hidden="true"></span><span>Analyte 2 molecule</span></li>

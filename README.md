@@ -15,7 +15,7 @@ No build step and no dependencies: plain HTML, CSS and JavaScript.
 
 ## What you can change
 
-The page has two pages, switched by the **Column** and **Results** tabs at the top (Back, Forward and a reload work, and `#results` in the address opens the results). **Column** is the animation with its controls, in the house toolbar pattern: the column conditions and the two analytes along the top, then Inject, Pause and a **Settings** drop-down over the drawing for the occasional options (speed, re-injection, ghost band, true-scale band). Flow rate runs full width under the drawing. **Results** holds the van Deemter plot and the calculated values. Both pages follow the same live model, so the results are always for the column as it is set now.
+The page has two pages, switched by the **Column** and **Results** tabs at the top (Back, Forward and a reload work, and `#results` in the address opens the results). **Column** is the animation with its controls, in the house toolbar pattern: the column conditions and the two analytes along the top, then Inject, Pause and a **Settings** drop-down over the drawing for the occasional options (speed, re-injection, ghost band, true-scale band). Flow rate runs full width under the drawing. **Results** holds the van Deemter plot and the calculated values, with the notes on the model and the animation at the bottom. Both pages follow the same live model, so the results are always for the column as it is set now.
 
 | Control | What it does in the model |
 |---|---|

@@ -18,6 +18,12 @@
   var SUB = ['₁', '₂'];
   var NB = ' ';            // non-breaking space before units
   var THEME_KEY = 'van-deemter-explorer-theme';
+  // Smallest windows (CSS px) that take the one-screen arrangement: where the toolbar fits in its rows and
+  // the drawing still gets its minimum height (26rem, as tall as on the scrolling page, so the molecules
+  // keep their size). Measured: 1440 x 900 gives 387 px of the 416 needed; 1680 x 1050 and 1920 x 1080
+  // give 501 and 531 of 468 (root 18 px); presenting, 1920 x 1200 gives 536 of 520. Laptop windows
+  // therefore keep the scrolling page.
+  var ONE_SCREEN = { width: 1100, height: 940, heightLarge: 1030, presentWidth: 1280, presentHeight: 1190 };
 
   function $(id) { return document.getElementById(id); }
 
@@ -398,7 +404,7 @@
 
   // --- layout and theme -------------------------------------------------------
 
-  /** A visual on a hidden page has no size, so only the shown page's visuals are laid out. */
+  /** A visual on a hidden page or tab has no size, so only the shown one is laid out. */
   function layout() {
     if (page === 'column') {
       var w = $('column-view').clientWidth;
@@ -407,10 +413,82 @@
       band.setLayout(pad, pad);
       column.resize();
       band.resize();
-    } else if (page === 'results') {
+      if (oneScreen()) checkFit();
+    } else if (page === 'results' && !$('panel-vd').hidden) {
       vdPlot.resize();
     }
   }
+
+  // --- one screen (style guide 4.1) ------------------------------------------------
+
+  // When the window is large enough, each page fills it with no page scroll: the column drawing takes the
+  // spare height, and the results card holds the open tab. Below the size, or at high zoom, the same markup
+  // stacks and scrolls like any page.
+  var html = document.documentElement, instrumentCard = document.querySelector('.instrument-card');
+  var tooSmall = null;
+  function presenting() { return html.hasAttribute('data-present'); }
+  function oneScreen() { return html.classList.contains('one-screen'); }
+  function fits() {
+    var w = window.innerWidth, h = window.innerHeight, p = presenting();
+    if (tooSmall && tooSmall.p === p && w <= tooSmall.w && h <= tooSmall.h) return false;
+    if (p) return w >= ONE_SCREEN.presentWidth && h >= ONE_SCREEN.presentHeight;
+    // The large-screen root steps (18 and 20 px) make the toolbar and Key taller too.
+    var large = parseFloat(getComputedStyle(html).fontSize) > 16;
+    return w >= ONE_SCREEN.width && h >= (large ? ONE_SCREEN.heightLarge : ONE_SCREEN.height);
+  }
+  function updateOneScreen() {
+    var on = fits();
+    if (on !== oneScreen()) html.classList.toggle('one-screen', on);
+    queueLayout();
+  }
+
+  // If the column card cannot hold the drawing at its minimum height (larger text settings, a short
+  // window), its content overflows. That is measured again after a pause, twice, a second apart, each time
+  // in a drawn frame; only if it overflows both times does the page stack, and it stays stacked until the
+  // window grows. A reading taken while the page is still settling never decides it.
+  var fitTimer = 0, overCount = 0;
+  function overflowing() { return instrumentCard.scrollHeight > instrumentCard.clientHeight + 1; }
+  function checkFit() {
+    if (!overflowing()) { overCount = 0; return; }
+    clearTimeout(fitTimer);
+    fitTimer = setTimeout(function () { requestAnimationFrame(confirmFit); }, overCount ? 1000 : 500);
+  }
+  function confirmFit() {
+    if (!oneScreen() || page !== 'column' || !overflowing()) { overCount = 0; return; }
+    if (++overCount < 2) { checkFit(); return; }
+    overCount = 0;
+    tooSmall = { p: presenting(), w: window.innerWidth, h: window.innerHeight };
+    html.classList.remove('one-screen');
+    queueLayout();
+  }
+
+  // --- results tabs (WAI-ARIA tabs pattern, automatic activation) --------------------
+
+  var tabs = [].slice.call(document.querySelectorAll('#page-results [role="tab"]'));
+  function selectedTab() { return document.querySelector('#page-results [role="tab"][aria-selected="true"]'); }
+
+  function selectTab(tab, focus) {
+    tabs.forEach(function (t) {
+      var on = t === tab;
+      t.setAttribute('aria-selected', String(on));
+      t.tabIndex = on ? 0 : -1;
+      $(t.getAttribute('aria-controls')).hidden = !on;
+    });
+    if (vdPlot.tooltipOpen()) vdPlot.hideTooltip();
+    if (focus) tab.focus();
+    layout();   // the plot has no size while its tab is hidden, so it is laid out when the tab opens
+  }
+
+  tabs.forEach(function (t, i) {
+    t.addEventListener('click', function () { selectTab(t, false); });
+    t.addEventListener('keydown', function (e) {
+      var j = { ArrowRight: (i + 1) % tabs.length, ArrowLeft: (i - 1 + tabs.length) % tabs.length,
+                Home: 0, End: tabs.length - 1 }[e.key];
+      if (j === undefined) return;
+      e.preventDefault();
+      selectTab(tabs[j], true);
+    });
+  });
 
   // --- the page switch --------------------------------------------------------
 
@@ -427,8 +505,8 @@
     window.scrollTo(0, 0);
     layout();   // the shown page's visuals take their size
     if (name === 'column') { column.draw(); band.draw(); }
-    // Focus goes to the start of the new page: the first control, or the first panel's title.
-    if (focus) (name === 'results' ? $('vd-title') : els.temp).focus();
+    // Focus goes to the start of the new page: the open tab, or the first control.
+    if (focus) (name === 'results' ? selectedTab() : els.temp).focus();
   }
 
   function fromHash() { return location.hash === '#results' ? 'results' : 'column'; }
@@ -458,6 +536,7 @@
     els.present.setAttribute('aria-pressed', String(on));
     els.presentStatus.textContent = on ? 'Presentation mode on. Press Escape to exit.' : 'Presentation mode off.';
     refreshTheme();    // re-read the --chart-* tokens and the presentation palette
+    updateOneScreen(); // the presenting thresholds differ
     layout();          // visuals re-measure their new heights
     if (on && document.fullscreenEnabled && !document.fullscreenElement) {
       document.documentElement.requestFullscreen().catch(function () { /* refused: the mode still applies */ });
@@ -606,8 +685,14 @@
       layout();
     });
   }
-  if ('ResizeObserver' in window) new ResizeObserver(queueLayout).observe(document.querySelector('main'));
-  else window.addEventListener('resize', queueLayout);
+  if ('ResizeObserver' in window) {
+    var ro = new ResizeObserver(queueLayout);
+    ro.observe(document.querySelector('main'));
+    document.querySelectorAll('.drawing-fit, .chart-visual').forEach(function (el) { ro.observe(el); });
+  } else {
+    window.addEventListener('resize', queueLayout);
+  }
+  window.addEventListener('resize', updateOneScreen);
 
   // --- start ------------------------------------------------------------------
 
@@ -621,6 +706,7 @@
   state.F = +els.flow.value;
   if (!active().length) analytes[0].on = true;
   recompute();
+  html.classList.toggle('one-screen', fits());
   show(fromHash(), false);   // nothing moves focus on the first load
   refreshTheme();
   inject();

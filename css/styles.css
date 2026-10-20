@@ -374,7 +374,7 @@ select {
 .visual { display: block; width: 100%; height: var(--h); }
 .column-canvas { --h: clamp(190px, 20.3vw, max(260px, 34vh)); }
 .band-canvas { --h: clamp(120px, 12.5vw, max(160px, 22vh)); margin-top: 4px; }
-.vd-canvas { --h: clamp(340px, 26.5vw, max(340px, 48vh)); cursor: crosshair; touch-action: none; }
+.vd-canvas { cursor: crosshair; touch-action: none; }   /* sized by its .chart-visual box (page.css) */
 
 /* Grid legend: one entry per cell, swatch in a 26 px column, then the words. */
 .lg-key { display: inline-block; flex: none; width: 26px; height: 3px; border-radius: 2px; background: var(--key); vertical-align: middle; }
@@ -466,7 +466,6 @@ table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nu
 th, td { padding: 5px 8px; text-align: right; border-bottom: 1px solid var(--grid); white-space: nowrap; }
 th { color: var(--text-secondary); font-weight: 600; }
 
-.results { display: flex; flex-direction: column; gap: 16px; }
 
 /* Hierarchy: h2 1.4rem > tile label 1.2rem > value 1.1rem > sub-caption 0.78rem. */
 .tile-label { display: block; font-size: 1.2rem; font-weight: 620; line-height: 1.25; color: var(--text-primary); }
@@ -549,7 +548,6 @@ th { color: var(--text-secondary); font-weight: 600; }
   .card { padding: 14px; }
   .pill { padding: 6px 10px; }
   .pill-name { display: none; }
-  .vd-canvas { --h: 280px; }
   .meter-scale span:last-child { display: none; }
 }
 

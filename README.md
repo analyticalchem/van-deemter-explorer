@@ -15,7 +15,9 @@ No build step and no dependencies: plain HTML, CSS and JavaScript.
 
 ## What you can change
 
-The page has two pages, switched by the **Column** and **Results** tabs at the top (Back, Forward and a reload work, and `#results` in the address opens the results). **Column** is the animation with its controls, in the house toolbar pattern: the column conditions and the two analytes along the top, then Inject, Pause and a **Settings** drop-down over the drawing for the occasional options (speed, re-injection, ghost band, true-scale band). Flow rate runs full width under the drawing. **Results** holds the van Deemter plot and the calculated values, with the notes on the model and the animation at the bottom. Both pages follow the same live model, so the results are always for the column as it is set now.
+The page has two pages, switched by the **Column** and **Results** tabs at the top (Back, Forward and a reload work, and `#results` in the address opens the results). **Column** is the animation with its controls, in the house toolbar pattern: the column conditions and the two analytes along the top, then Inject, Pause and a **Settings** drop-down over the drawing for the occasional options (speed, re-injection, ghost band, true-scale band). Flow rate runs full width under the drawing. **Results** is one card of tabs: **Van Deemter Plot**, **Calculated Results** and **About** (the notes on the model and the animation); the arrow keys move between them. Both pages follow the same live model, so the results are always for the column as it is set now.
+
+On a large window (about 1100 × 940 or more, 1100 × 1030 once the text steps up on a big screen, 1280 × 1190 when presenting) each page fills the screen with no page scroll, and the column drawing takes the spare height. Smaller windows, phones and zoomed-in views get the same page as one scrolling column. The drawing is never made shorter than it is on the scrolling page, so the molecules keep their size; if a window can't give it that room, the page scrolls instead.
 
 | Control | What it does in the model |
 |---|---|
@@ -93,12 +95,12 @@ Every stylesheet and script link in `index.html` ends in the same `?v=YYYYMMDD-n
 ```
 index.html        page structure and text
 css/styles.css    tokens, layout, components, themes, presentation mode
-css/page.css      the two pages and their switch, the Column panel's toolbar, Settings drop-down and flow-rate bar
+css/page.css      the instrument layout: the two pages and their switch, the toolbar, Settings, flow-rate bar, results tabs, one screen
 js/model.js       van Deemter physics (pure functions)
 js/sim.js         stochastic molecule simulation (no DOM)
 js/column.js      column animation (canvas)
 js/plots.js       band profile and van Deemter plot (canvas)
-js/main.js        wires controls, model, simulation, views, theme and presentation mode
+js/main.js        wires controls, model, simulation, views, pages and tabs, one screen, theme and presentation mode
 ```
 
 ## License

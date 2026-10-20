@@ -30,8 +30,13 @@
     scaleNote: $('scale-note'), live: $('live'), theme: $('theme'),
     present: $('present'), presentStatus: $('present-status'),
     pressureStatus: $('p-status'),
-    table: $('vd-table'), lgGhost: $('lg-ghost')
+    table: $('vd-table'), lgGhost: $('lg-ghost'), resultsNow: $('results-now')
   };
+
+  // The two pages (style guide 7.19): one document, one shown at a time, chosen by the address.
+  var pages = { column: $('page-column'), results: $('page-results') };
+  var navs = { column: $('nav-column'), results: $('nav-results') };
+  var baseTitle = document.title, page = null;
 
   var state = {
     F: +$('flow').value,   // flow rate in mL/min; a typed value is kept exactly, off the slider's steps
@@ -51,7 +56,7 @@
     { id: 1, on: false, suffix: '2', color: '--analyte2', sim: new window.VDSim(N_MOLECULES),
       check: $('a2-on'), slider: $('mt2'), out: $('mt2-out'), sub: $('mt2-sub') }
   ];
-  var column = new window.ColumnView($('column'), analytes, P.L);
+  var column = new window.ColumnView($('column-view'), analytes, P.L);
   var band = new window.BandPlot($('band'), analytes, P.L);
   var vdPlot = new window.VanDeemterPlot($('vd'), $('vd-tip'), setFlow);
 
@@ -106,6 +111,21 @@
     updateReadouts();
     updateTable();
     updateScaleNote();
+    updateResultsNow();
+  }
+
+  /**
+   * The Results page's opening line: the conditions set on the Column page. A status region, written only
+   * when the text changes; the flow rate is left out because a drag along the plot changes it on every step.
+   */
+  function updateResultsNow() {
+    var inp = cur.inp, off = ['A', 'B', 'C'].filter(function (t) { return !state.terms[t]; });
+    var names = { A: 'A', B: 'B/u', C: 'C·u' };
+    var text = 'Column conditions: ' + inp.Tc + NB + '°C, ' + fmt(inp.dpUm, 1) + NB + 'µm particles, ' +
+      active().map(function (a) { return 'analyte ' + (a.id + 1) + ' k = ' + kText(a.k); }).join(', ') +
+      (off.length ? ', ' + off.map(function (t) { return names[t]; }).join(' and ') + ' switched off' : '') +
+      '. Set them on the Column page.';
+    if (els.resultsNow.textContent !== text) els.resultsNow.textContent = text;
   }
 
   function inject() {
@@ -368,22 +388,50 @@
       liveTimer += dt;
       if (liveTimer > 0.2) { liveTimer = 0; updateLive(); }
     }
-    column.draw();
-    band.draw();
+    // The simulation keeps running on either page, so the results stay live; only the shown page draws.
+    if (page === 'column') {
+      column.draw();
+      band.draw();
+    }
     requestAnimationFrame(frame);
   }
 
   // --- layout and theme -------------------------------------------------------
 
+  /** A visual on a hidden page has no size, so only the shown page's visuals are laid out. */
   function layout() {
-    var w = $('column').clientWidth;
-    var pad = w < 560 ? 34 : 60;
-    column.setLayout(pad, pad);
-    band.setLayout(pad, pad);
-    column.resize();
-    band.resize();
-    vdPlot.resize();
+    if (page === 'column') {
+      var w = $('column-view').clientWidth;
+      var pad = w < 560 ? 34 : 60;
+      column.setLayout(pad, pad);
+      band.setLayout(pad, pad);
+      column.resize();
+      band.resize();
+    } else if (page === 'results') {
+      vdPlot.resize();
+    }
   }
+
+  // --- the page switch --------------------------------------------------------
+
+  function show(name, focus) {
+    if (name === page) return;
+    page = name;
+    Object.keys(pages).forEach(function (k) {
+      pages[k].hidden = k !== name;
+      if (k === name) navs[k].setAttribute('aria-current', 'page'); else navs[k].removeAttribute('aria-current');
+    });
+    els.settings.open = false;
+    if (vdPlot.tooltipOpen()) vdPlot.hideTooltip();
+    document.title = name === 'results' ? 'Results · ' + baseTitle : baseTitle;
+    window.scrollTo(0, 0);
+    layout();   // the shown page's visuals take their size
+    if (name === 'column') { column.draw(); band.draw(); }
+    // Focus goes to the start of the new page: the first control, or the first panel's title.
+    if (focus) (name === 'results' ? $('vd-title') : els.temp).focus();
+  }
+
+  function fromHash() { return location.hash === '#results' ? 'results' : 'column'; }
 
   var themes = ['auto', 'light', 'dark'];
   function applyTheme(name) {
@@ -566,12 +614,14 @@
   // The saved theme was applied by the inline script in <head>; show it on the button.
   els.theme.textContent = 'Theme: ' + (document.documentElement.dataset.theme || 'auto');
 
+  window.addEventListener('hashchange', function () { show(fromHash(), true); });
+
   // Browsers may restore the tick boxes on reload.
   analytes.forEach(function (a) { a.on = a.check.checked; });
   state.F = +els.flow.value;
   if (!active().length) analytes[0].on = true;
   recompute();
-  layout();
+  show(fromHash(), false);   // nothing moves focus on the first load
   refreshTheme();
   inject();
   updateLive();
@@ -583,6 +633,7 @@
   window.app = {
     analytes: analytes, sim: analytes[0].sim, column: column, band: band, plot: vdPlot,
     state: state, current: function () { return cur; }, inject: inject, recompute: recompute,
-    resolution: function () { return resolution(cur.u); }, setPresent: setPresent, isPresent: isPresent
+    resolution: function () { return resolution(cur.u); }, setPresent: setPresent, isPresent: isPresent,
+    page: function () { return page; }, show: show
   };
 })();

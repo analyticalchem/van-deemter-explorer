@@ -15,7 +15,7 @@ No build step and no dependencies: plain HTML, CSS and JavaScript.
 
 ## What you can change
 
-The controls sit in the Column panel with the drawing they drive, in the house toolbar pattern: the column conditions and the two analytes along the top, then Inject, Pause and a **Settings** drop-down for the occasional options (speed, re-injection, ghost band, true-scale band). Flow rate runs full width under the drawing.
+The page has two pages, switched by the **Column** and **Results** tabs at the top (Back, Forward and a reload work, and `#results` in the address opens the results). **Column** is the animation with its controls, in the house toolbar pattern: the column conditions and the two analytes along the top, then Inject, Pause and a **Settings** drop-down over the drawing for the occasional options (speed, re-injection, ghost band, true-scale band). Flow rate runs full width under the drawing. **Results** holds the van Deemter plot and the calculated values. Both pages follow the same live model, so the results are always for the column as it is set now.
 
 | Control | What it does in the model |
 |---|---|
@@ -93,7 +93,7 @@ Every stylesheet and script link in `index.html` ends in the same `?v=YYYYMMDD-n
 ```
 index.html        page structure and text
 css/styles.css    tokens, layout, components, themes, presentation mode
-css/page.css      the Column panel: toolbar, Settings drop-down, flow-rate bar
+css/page.css      the two pages and their switch, the Column panel's toolbar, Settings drop-down and flow-rate bar
 js/model.js       van Deemter physics (pure functions)
 js/sim.js         stochastic molecule simulation (no DOM)
 js/column.js      column animation (canvas)

@@ -29,6 +29,10 @@
         <p class="lede">How flow rate, temperature, particle size and mass transfer set the plate height of a partition-chromatography column.</p>
         <p class="present-hint">Alt + Shift + P toggles · Esc exits</p>
       </div>
+      <nav class="page-nav" aria-label="Pages">
+        <a href="#column" id="nav-column" aria-current="page">Column</a>
+        <a href="#results" id="nav-results">Results</a>
+      </nav>
       <div class="header-actions">
         <button id="theme" class="btn ghost" type="button" title="Switch between automatic, light and dark colors">Theme: auto</button>
         <button id="present" class="btn ghost" type="button" aria-pressed="false" title="Larger text and controls for projecting. Escape exits.">Present</button>
@@ -59,9 +63,13 @@
   </header>
 
   <main id="main">
-    <!-- The Column panel: the controls live with the drawing they drive (style guide 7.18). A toolbar
-         holds the column conditions and the analytes, then Inject, Pause and a Settings drop-down for the
-         occasional options; the flow-rate slider runs full width under the drawing. -->
+    <!-- Two pages in one document (style guide 7.19), shown one at a time by the address: #results shows
+         the results, anything else the column. Both follow the same live model. -->
+
+    <!-- Page 1, the column: the controls live with the drawing they drive (style guide 7.18). A toolbar
+         holds the column conditions and the analytes, then Inject, Pause, a Settings drop-down over the
+         drawing and the link to the results; the flow-rate slider runs full width under the drawing. -->
+    <div class="page page-column" id="page-column">
     <section class="card visual-card column-card" aria-labelledby="column-title">
       <div class="card-head">
         <h2 id="column-title">Column</h2>
@@ -133,13 +141,14 @@
               </div>
             </div>
           </details>
+          <a class="btn go-results" href="#results">See the results<span aria-hidden="true"> →</span></a>
         </div>
       </div>
 
-      <canvas id="column" class="visual column-canvas" role="img"
-        aria-label="Animation of analyte molecules flowing through a packed column. Molecules stop in the stationary liquid film when they touch a packing particle, then rejoin the flow. Band positions are in the caption below this panel and the values are in Calculated Results."></canvas>
+      <canvas id="column-view" class="visual column-canvas" role="img"
+        aria-label="Animation of analyte molecules flowing through a packed column. Molecules stop in the stationary liquid film when they touch a packing particle, then rejoin the flow. Band positions are in the caption below this panel, and the values are under Calculated Results on the Results page."></canvas>
       <canvas id="band" class="visual band-canvas" role="img"
-        aria-label="Distribution of analyte along the column: histogram of the molecules and the predicted Gaussian band, with the 4 sigma peak width marked. The band widths are in Calculated Results."></canvas>
+        aria-label="Distribution of analyte along the column: histogram of the molecules and the predicted Gaussian band, with the 4 sigma peak width marked. The band widths are under Calculated Results on the Results page."></canvas>
 
       <div class="flow-bar">
         <div class="control-head">
@@ -161,11 +170,18 @@
       </ul>
       <p class="live" id="live"></p>
     </section>
+    </div>
 
+    <!-- Page 2, the results: the van Deemter plot and the calculated values for the column as it is set now. -->
+    <div class="page page-results" id="page-results" hidden>
+    <div class="results-head">
+      <p class="results-now" id="results-now" role="status"></p>
+      <a class="btn go-column" href="#column"><span aria-hidden="true">← </span>Back to the column</a>
+    </div>
     <div class="grid-2">
       <section class="card chart-card" aria-labelledby="vd-title">
         <div class="card-head row">
-          <h2 id="vd-title">Van Deemter Plot</h2>
+          <h2 id="vd-title" tabindex="-1">Van Deemter Plot</h2>
           <label class="check small"><input type="checkbox" id="autoy"> Auto-scale H axis</label>
         </div>
         <div class="plot-wrap">
@@ -280,7 +296,9 @@
         </div>
       </section>
     </div>
+    </div>
 
+    <!-- The notes belong to both pages, so they sit under whichever is shown. -->
     <section class="card notes" aria-labelledby="notes-title">
       <details>
         <summary><h2 id="notes-title">About the Model and the Animation</h2></summary>
@@ -301,7 +319,7 @@
           <p>Each molecule alternates between flowing with the mobile phase and sitting still in the stationary liquid film on a particle. On average it spends k/(1 + k) of its time in the film, so the band moves at u/(1 + k). The random lengths of those stays produce the C·u broadening. The A and B/u terms are added as random variation in each flowing step. The histogram of molecules and the Gaussian predicted from σ² = H·x come from the same numbers, so they should agree.</p>
           <p>A real column has tens of thousands of plates, and a molecule enters and leaves the stationary phase tens of thousands of times. That is far too fast to see. The animation therefore shows a column with 81× fewer plates: band widths are magnified 9×. The stays in the film are also made longer and more regular than real ones, so each one is visible, while still producing exactly the C·u broadening. The up-and-down path of each molecule around the packing is illustrative only. All readouts give real-column values.</p>
           <h3>Keyboard</h3>
-          <p>Every control works from the keyboard: Tab moves between controls, arrow keys move sliders, and Space or Enter presses buttons and ticks boxes. Clicking or dragging on the van Deemter plot sets the flow rate, which the Flow rate slider also does. Alt + Shift + P (Option + Shift + P on a Mac) switches presentation mode on and off, and Escape leaves it.</p>
+          <p>Every control works from the keyboard: Tab moves between controls, arrow keys move sliders, and Space or Enter presses buttons and ticks boxes. The Column and Results tabs at the top switch between the two pages, and the browser's Back and Forward buttons do too. Escape closes Settings. Clicking or dragging on the van Deemter plot sets the flow rate, which the Flow rate slider also does. Alt + Shift + P (Option + Shift + P on a Mac) switches presentation mode on and off, and Escape leaves it.</p>
         </div>
       </details>
     </section>

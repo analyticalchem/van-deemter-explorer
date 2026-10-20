@@ -1,18 +1,38 @@
-/* Van Deemter Explorer: this page's own layout for the Column panel, where the controls sit with the
-   drawing they drive (style guide 7.18, the toolbar and Settings drop-down). House tokens and components
-   are in css/styles.css.
+/* Van Deemter Explorer: this page's own layout. House tokens and components are in css/styles.css.
 
-   The panel holds, in source order: the toolbar (the column conditions and the two analytes, then Inject,
-   Pause and a Settings drop-down for the occasional options), the column drawing, the band profile, and the
-   flow-rate slider full width under them. Pause stays in the toolbar, before the animation (2.2.2). */
+   Two pages in one document (style guide 7.19; main.js shows one at a time, #column and #results). The
+   Column page is the Column panel, where the controls sit with the drawing they drive (7.18): the toolbar
+   (the column conditions and the two analytes, then Inject, Pause, a Settings drop-down over the drawing and
+   the link to the results), the column drawing, the band profile, and the flow-rate slider full width under
+   them. Pause stays in the toolbar, before the animation (2.2.2). The Results page holds the van Deemter
+   plot and the calculated values. The notes sit under whichever page is shown. */
+
+/* ---------- Pages and the page switch ---------- */
+
+.page { display: grid; gap: 16px; min-width: 0; }
+.page[hidden] { display: none; }
+
+/* The page switch in the header: links, the current page underlined in the accent with darker text. */
+.page-nav { display: flex; flex-wrap: wrap; gap: 4px; align-self: center; }
+.page-nav a {
+  padding: 6px 12px 5px; border-bottom: 3px solid transparent; border-radius: 6px 6px 0 0;
+  font-weight: 600; color: var(--text-secondary); text-decoration: none;
+}
+.page-nav a:hover { background: var(--surface-2); color: var(--text-primary); }
+.page-nav a[aria-current="page"] { color: var(--text-primary); border-bottom-color: var(--accent); }
+a.btn { display: inline-block; text-decoration: none; white-space: nowrap; }
+
+.results-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
+.results-now { flex: 1 1 20rem; margin: 0; font-size: 0.9rem; color: var(--text-secondary); }
 
 /* ---------- Toolbar ---------- */
 
-.toolbar { display: grid; gap: 12px; margin-bottom: 12px; }
+.toolbar { position: relative; display: grid; gap: 12px; margin-bottom: 12px; }
 .tb-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 24px; }
 .tb-item { position: relative; min-width: 0; }
 .tb-label { font-weight: 600; font-size: 0.9rem; }
 .tb-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+.tb-run .go-results { margin-left: auto; }
 
 /* The set-up controls: one-line sliders (label, slider, value), two to a row, with any caption or presets
    on a second line. A subgrid lines the two rows up, so their sliders start and end together. */
@@ -40,8 +60,11 @@
 
 /* ---------- Settings drop-down ---------- */
 
-/* A native disclosure styled as a button with a chevron, filled while open. */
-.settings { position: relative; z-index: 20; }
+/* A native disclosure styled as a button with a chevron, filled while open. The panel drops down over the
+   column drawing, so neither the button nor the drawing moves. It hangs from the toolbar rather than from
+   the button, and is never wider than the toolbar, so at 320 px or 400 % zoom it still fits the window
+   with no sideways scroll (1.4.10). */
+.settings { position: static; }
 .settings > summary { display: inline-flex; align-items: center; gap: 8px; list-style: none; }
 .settings > summary::-webkit-details-marker { display: none; }
 .settings > summary::after {
@@ -53,13 +76,12 @@
 /* Closed, the panel has no box at all (some browsers keep a hidden one, sized for a different width). */
 .settings:not([open]) > .settings-panel { display: none; }
 .settings-panel {
+  position: absolute; left: 0; top: 100%; z-index: 20; width: min(40rem, 100%);
   display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); gap: 16px 32px;
-  margin-top: 10px; padding: 14px 18px 16px; background: var(--surface);
+  margin-top: 6px; padding: 14px 18px 16px; background: var(--surface);
   border: 2px solid var(--text-muted); border-radius: var(--radius);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
-/* This page scrolls (it is not a one-screen instrument page), so the open panel takes a row of its own,
-   the full width of the toolbar, and pushes the drawing down. */
-html:not(.one-screen) .settings[open] { flex: 1 1 100%; }
 .settings-group { display: grid; gap: 12px; align-content: start; justify-items: start; }
 .settings-group .info-title {
   margin: 0; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-secondary);
@@ -98,6 +120,8 @@ html:not(.one-screen) .settings[open] { flex: 1 1 100%; }
 /* ---------- Presentation mode ---------- */
 
 @media (min-width: 900px) {
+  html[data-present] .page-nav a { padding: 10px 14px 9px; font-size: 1.05rem; }
+  html[data-present] .results-now { font-size: 1.05rem; }
   html[data-present] .tb-label, html[data-present] .tb-slider .toggle { font-size: 1.05rem; }
   html[data-present] .tb-slider .toggle input { width: 24px; height: 24px; }
   html[data-present] .settings-group .info-title { font-size: 0.9rem; }
